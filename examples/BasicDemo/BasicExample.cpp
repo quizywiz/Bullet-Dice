@@ -414,6 +414,7 @@ class Mirtich {
 	  iner.setX(J[X][X]);
 	  iner.setY(J[Y][Y]);
 	  iner.setZ(J[Z][Z]);
+	  //cout << J[X][X] << "," << J[Y][Y] << "," << J[Z][Z] << endl;
 	}
 };
 
@@ -431,14 +432,14 @@ void BasicExample::initPhysics()
 	m_guiHelper->setUpAxis(1);
 
 	createEmptyDynamicsWorld();
-	//m_dynamicsWorld->setGravity(btVector3(0,0,0));
+	//m_dynamicsWorld->setGravity(btVector3(0,-10,0));
 	m_guiHelper->createPhysicsDebugDrawer(m_dynamicsWorld);
 
 	if (m_dynamicsWorld->getDebugDrawer())
 		m_dynamicsWorld->getDebugDrawer()->setDebugMode(btIDebugDraw::DBG_DrawWireframe+btIDebugDraw::DBG_DrawContactPoints);
 
 	///create a few basic rigid bodies
-	btBoxShape* groundShape = createBoxShape(btVector3(btScalar(500.),btScalar(500.),btScalar(500.)));
+	btBoxShape* groundShape = createBoxShape(btVector3(btScalar(5000.),btScalar(10.),btScalar(5000.)));
 	
 	groundShape->initializePolyhedralFeatures();
 	//btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),50);
@@ -447,7 +448,7 @@ void BasicExample::initPhysics()
 
 	btTransform groundTransform;
 	groundTransform.setIdentity();
-	groundTransform.setOrigin(btVector3(0,-500,0));
+	groundTransform.setOrigin(btVector3(0,-10,0));
 
 	{
 		btScalar mass(0.);
@@ -487,30 +488,32 @@ void BasicExample::initPhysics()
 		//cout << "localInertia: ";
 		btVector3 localInertia(0,0,0);
 
-		if (isDynamic)
-			colShape->calculateLocalInertia(mass,localInertia);
-
-		//cout << localInertia.getX() << endl;
-		//cout << localInertia.getY() << endl;
-		//cout << localInertia.getZ() << endl;
+		
 
 		int max_height = 50;
-		double height = 5 + rand_double()*max_height;
-
+		double height = 50 + rand_double()*max_height;
+		//height = 2;
 		//cout << "height : " << height << endl;
 
 		startTransform.setOrigin(btVector3(	btScalar(0),
 										btScalar(height),
 										btScalar(0)));
 		btQuaternion quat;
-		quat.setEuler(rand_double()*4*M_PI,rand_double()*4*M_PI,rand_double()*4*M_PI);
-       	startTransform.setRotation(quat);
+		quat.setEuler(rand_double()*2*M_PI,rand_double()*2*M_PI,rand_double()*2*M_PI);
+       	startTransform.setRotation(btQuaternion(rand_double() - 0.5, rand_double()- 0.5, rand_double()- 0.5, rand_double() * 2*M_PI));
 
        	btTransform localTransform;
         localTransform.setIdentity();
         localTransform.setOrigin((-1)*getCenterOfMass());
-        //localTransform.setRotation(quat);
         compoundShape->addChildShape(localTransform, colShape);
+
+
+        if (isDynamic)
+			colShape->calculateLocalInertia(mass,localInertia);
+
+		cout << localInertia.getX() << ",";
+		cout << localInertia.getY() << ",";
+		cout << localInertia.getZ() << endl;
 		this->dice = createRigidBody(mass,startTransform,compoundShape);	
     }
     
@@ -625,12 +628,12 @@ set<int> BasicExample::checkFace(){
 	if(res.size() != 4){
 		for(i = 0; i < 8; i++){
 			btVector3 endPosition = transfrom*this->vertices[i];
-			cout << endPosition[0] << "," << endPosition[1] << "," << endPosition[2] << endl;
+			//cout << endPosition[0] << "," << endPosition[1] << "," << endPosition[2] << endl;
 		}
 	}
 	else{
 		for(int s:res){
-			cout << s << ",";
+			//cout << s << ",";
 		}
 		cout << endl;
 	}

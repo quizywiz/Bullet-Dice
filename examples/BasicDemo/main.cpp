@@ -158,16 +158,16 @@ int main(int argc, char* argv[])
 	int i;
 	double min_discrepancy = 1;
 	float l,b,h;
-	//cin>>l>>b>>h;
+	
 	l = 1;
 	b = 1.22249;
 	h = 1.44929;
+	cin>>l>>b>>h;
 	float best_b,best_h;
 	for(i = 0; i < simulation_count; i++){
 		//float l = 1;
 		//float b = rand_double1() + 1;
 		//float h = rand_double1() + 1;
-
 		float length = l;
 		float height = b;//1.5;
 		float width = h;//1.75;

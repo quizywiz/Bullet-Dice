@@ -88,9 +88,15 @@ int main(int argc, char* argv[])
 	example = StandaloneExampleCreateFunc(options);
 	//std::cout << "before vertexPoints" << std::endl;
 	//initialize default vertices
-	float length = 0.1;
-	float height = 0.1;
-	float width = 0.1;
+
+
+
+	float l = 10;
+	float b = 11;
+	float h = 12;
+	float length = l;
+	float height = b;
+	float width = h;
 	btVector3 v0;
 	v0.setX(0.0f);
 	v0.setY(0.0f);
