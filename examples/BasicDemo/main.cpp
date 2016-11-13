@@ -79,17 +79,28 @@ bool faceMatch(set<int> faces1,set<int> faces2){
 
 
 
-void sum_prob(int i,int side_remain,double curr_sum,vector<double> probs, vector<double> &prob_sums){
-	if(side_remain == 0){
-		prob_sums.push_back(curr_sum);
-		return;
-	}
-	int j;
-	for(j = i + 1; j < probs.size(); j++){
-		sum_prob(j,side_remain-1,curr_sum+probs[i],probs,prob_sums);
-	}
+double getDiscrepancy(vector<double> probs) {
+    int n = probs.size();
+    vector<double> vals;
+    for (int i = 0; i < (1 << n); ++i) {
+        double cur_prob = 0;
+        for (int k = i, j = 0; k > 0; k >>= 1, ++j) {
+            if (k & 1) {
+                cur_prob += probs[j];
+            }
+        }
+        vals.push_back(cur_prob);
+    }
+    double d = 0;
+    sort(vals.begin(), vals.end());
+    for (int i = 0; i < vals.size() - 1; ++i) {
+    	//cout << vals[i] << endl;
+        if (vals[i + 1] - vals[i] > d) {
+            d = vals[i + 1] - vals[i];
+        }
+    }
+    return d;
 }
-
 
 double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 {
@@ -126,24 +137,7 @@ double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 	}
 	cout << endl;
 
-	//calculate sum of probabilities for each scenario
-	vector<double> prob_sums;
-	int side_inclued;
-	for(side_inclued = 1; side_inclued <= faces.size(); side_inclued++){
-		//calculate sum of probabilities for each possiblity of side included
-		for(i = 0; i < faces.size(); i++){
-			sum_prob(i,side_inclued,0,probs,prob_sums);
-		}
-	}
-
-
-	//calcualte maximum discrepancy
-	sort(prob_sums.begin(),prob_sums.end());
-	for(i = 0; i < prob_sums.size() - 1; i++){
-		res = max(res,(prob_sums[i+1]-prob_sums[i])/2);
-	}
-
-	return res;
+	return getDiscrepancy(probs);
 }
 
 double rand_double1() {
@@ -157,20 +151,22 @@ int main(int argc, char* argv[])
 	int simulation_count = 1;
 	int i;
 	double min_discrepancy = 1;
-	float l,b,h;
 	
-	l = 1;
-	b = 1.22249;
-	h = 1.44929;
-	cin>>l>>b>>h;
-	float best_b,best_h;
+	float l = 1;
+	float h = 1.22249;
+	float w = 1.44929;
+
+	float best_w,best_h;
 	for(i = 0; i < simulation_count; i++){
 		//float l = 1;
 		//float b = rand_double1() + 1;
 		//float h = rand_double1() + 1;
+
+		cout << "please enter l h w" << endl;
+		cin>>l>>h>>w;
 		float length = l;
-		float height = b;//1.5;
-		float width = h;//1.75;
+		float height = h;//1.5;
+		float width = w;//1.75;
 		btVector3 v0;
 		v0.setX(0.0f);
 		v0.setY(0.0f);
@@ -258,7 +254,7 @@ int main(int argc, char* argv[])
 		if(d < min_discrepancy){
 			min_discrepancy = d;
 			best_h = h;
-			best_b = b;
+			best_w = w;
 		}
 		
 		cout << "calculated discrepancy: " << d << endl;

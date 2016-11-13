@@ -89,14 +89,13 @@ int main(int argc, char* argv[])
 	//std::cout << "before vertexPoints" << std::endl;
 	//initialize default vertices
 
+	float l,h,w;
+	cout << "please enter l h w" << endl;
+	cin>>l>>h>>w;
 
-
-	float l = 10;
-	float b = 11;
-	float h = 12;
 	float length = l;
-	float height = b;
-	float width = h;
+	float height = h;
+	float width = w;
 	btVector3 v0;
 	v0.setX(0.0f);
 	v0.setY(0.0f);
@@ -169,7 +168,7 @@ int main(int argc, char* argv[])
 		app->swapBuffer();
 
 		example->checkDice();
-	} while (seconds_pass <= 100);
+	} while (seconds_pass <= 1000);
 
 	example->checkFace();
 	example->exitPhysics();

@@ -56,7 +56,7 @@ struct BasicExample : public CommonRigidBodyBase
 
 	void resetCamera()
 	{
-		float dist = 4;
+		float dist = 6;
 		float pitch = 52;
 		float yaw = 35;
 		float targetPos[3]={0,0,0};
@@ -432,7 +432,7 @@ void BasicExample::initPhysics()
 	m_guiHelper->setUpAxis(1);
 
 	createEmptyDynamicsWorld();
-	//m_dynamicsWorld->setGravity(btVector3(0,-10,0));
+	//m_dynamicsWorld->setGravity(btVector3(0,0,0));
 	m_guiHelper->createPhysicsDebugDrawer(m_dynamicsWorld);
 
 	if (m_dynamicsWorld->getDebugDrawer())
@@ -494,13 +494,21 @@ void BasicExample::initPhysics()
 		double height = 50 + rand_double()*max_height;
 		//height = 2;
 		//cout << "height : " << height << endl;
-
+		//height = 2;
 		startTransform.setOrigin(btVector3(	btScalar(0),
 										btScalar(height),
 										btScalar(0)));
-		btQuaternion quat;
-		quat.setEuler(rand_double()*2*M_PI,rand_double()*2*M_PI,rand_double()*2*M_PI);
-       	startTransform.setRotation(btQuaternion(rand_double() - 0.5, rand_double()- 0.5, rand_double()- 0.5, rand_double() * 2*M_PI));
+		
+		//btQuaternion quat;
+		//quat.setEuler(rand_double()*2*M_PI,rand_double()*2*M_PI,rand_double()*2*M_PI);
+       	
+       	double x = rand_double() - 0.5;
+       	double y = rand_double() - 0.5;
+       	double z = rand_double() - 0.5;
+       	double w = rand_double() * M_PI * 2;
+
+       	btQuaternion quat(btVector3(x,y,z),btScalar(w));
+       	startTransform.setRotation(quat);
 
        	btTransform localTransform;
         localTransform.setIdentity();
@@ -511,9 +519,9 @@ void BasicExample::initPhysics()
         if (isDynamic)
 			colShape->calculateLocalInertia(mass,localInertia);
 
-		cout << localInertia.getX() << ",";
-		cout << localInertia.getY() << ",";
-		cout << localInertia.getZ() << endl;
+		//cout << localInertia.getX() << ",";
+		//cout << localInertia.getY() << ",";
+		//cout << localInertia.getZ() << endl;
 		this->dice = createRigidBody(mass,startTransform,compoundShape);	
     }
     
