@@ -50,9 +50,11 @@ struct BasicExample : public CommonRigidBodyBase
 
 	void vertexPoints(vector<btVector3> vertices);
 	void printVertices();
-	bool checkDice();
+	bool DiceIsStill();
 	set<int> checkFace();
 	btVector3 getCenterOfMass();
+	double eps = 1e-7;
+
 
 	void resetCamera()
 	{
@@ -60,10 +62,14 @@ struct BasicExample : public CommonRigidBodyBase
 		float pitch = 52;
 		float yaw = 35;
 		float targetPos[3]={0,0,0};
+		const btTransform& transfrom = this->dice->getCenterOfMassTransform();
+		btVector3 com = getCenterOfMass();
+		btVector3 endPosition = transfrom*com;
 		m_guiHelper->resetCamera(dist,pitch,yaw,targetPos[0],targetPos[1],targetPos[2]);
+		//m_guiHelper->resetCamera(dist,pitch,yaw,endPosition.getX(),endPosition.getY(),endPosition.getZ());
 	}
-};
 
+};
 
 
 
@@ -397,10 +403,19 @@ class Mirtich {
 	  com.setX(r[X]);
 	  com.setY(r[Y]);
 	  com.setZ(r[Z]);
+
 	  //printf("inertia tensor with origin at c.o.m. :\n");
 	  //printf("%+15.6f  %+15.6f  %+15.6f\n", J[X][X], J[X][Y], J[X][Z]);
 	  //printf("%+15.6f  %+15.6f  %+15.6f\n", J[Y][X], J[Y][Y], J[Y][Z]);
 	  //printf("%+15.6f  %+15.6f  %+15.6f\n\n", J[Z][X], J[Z][Y], J[Z][Z]);
+	  double x = J[X][X];
+	  double y = J[Y][Y];
+	  double z = J[Z][Z];
+
+	  double small = min(x,min(y,z));
+	  //printf("%f, %f, %f\n",x/small,y/small,z/small);
+
+
 	  /*
 	  for(int i = 0 ; i < 3; ++ i) {
 	  	vector<double> inr;
@@ -419,11 +434,8 @@ class Mirtich {
 };
 
 
-
-
 double rand_double() {
 	double x = (double) rand() / RAND_MAX;
-	//cout << x * RAND_MAX << endl;
 	return x;
 }
 
@@ -432,7 +444,7 @@ void BasicExample::initPhysics()
 	m_guiHelper->setUpAxis(1);
 
 	createEmptyDynamicsWorld();
-	//m_dynamicsWorld->setGravity(btVector3(0,0,0));
+	m_dynamicsWorld->setGravity(btVector3(0,-10,0));
 	m_guiHelper->createPhysicsDebugDrawer(m_dynamicsWorld);
 
 	if (m_dynamicsWorld->getDebugDrawer())
@@ -467,12 +479,7 @@ void BasicExample::initPhysics()
         for(i = 0; i < 8; i++){
         	btVector3 vertex = this->vertices[i];
         	colShape->addPoint(vertex,true);
-        	//cout << vertex.getX() << " ";
-        	//cout << vertex.getY() << " ";
-        	//cout << vertex.getZ() << " ";
-        	//cout << endl;
         }
-        //cout << this->vertices.size() << endl;
 
 
 		/// Create Dynamic Objects
@@ -488,13 +495,15 @@ void BasicExample::initPhysics()
 		//cout << "localInertia: ";
 		btVector3 localInertia(0,0,0);
 
-		
+
+		btVector3 com = getCenterOfMass();
+
 
 		int max_height = 50;
-		double height = 50 + rand_double()*max_height;
-		//height = 2;
-		//cout << "height : " << height << endl;
-		//height = 2;
+		double height = com.getY()*2 + rand_double()*max_height;
+
+		//cout << "height: " << height << endl;
+		
 		startTransform.setOrigin(btVector3(	btScalar(0),
 										btScalar(height),
 										btScalar(0)));
@@ -502,12 +511,23 @@ void BasicExample::initPhysics()
 		//btQuaternion quat;
 		//quat.setEuler(rand_double()*2*M_PI,rand_double()*2*M_PI,rand_double()*2*M_PI);
        	
+       	/*
        	double x = rand_double() - 0.5;
        	double y = rand_double() - 0.5;
        	double z = rand_double() - 0.5;
-       	double w = rand_double() * M_PI * 2;
+       	
+		*/
 
-       	btQuaternion quat(btVector3(x,y,z),btScalar(w));
+		double x = rand_double()*2*M_PI;
+		double y = rand_double()*2*M_PI;
+		double z = rand_double()*2*M_PI;
+		const btScalar yaw = x;
+		const btScalar pitch = y;
+		const btScalar roll = z;
+
+        cout << "yaw,pitch,roll: " << (x/M_PI)*180  << "," << (y/M_PI)*180  << "," << (z/M_PI)*180  << endl;
+       	btQuaternion quat;
+       	quat.setEuler(yaw,pitch,roll);
        	startTransform.setRotation(quat);
 
        	btTransform localTransform;
@@ -519,28 +539,27 @@ void BasicExample::initPhysics()
         if (isDynamic)
 			colShape->calculateLocalInertia(mass,localInertia);
 
-		//cout << localInertia.getX() << ",";
-		//cout << localInertia.getY() << ",";
-		//cout << localInertia.getZ() << endl;
 		this->dice = createRigidBody(mass,startTransform,compoundShape);	
     }
     
 
-    
     int max_speed = 10;
     double max_rad = M_PI*10;
-    btVector3 angular = btVector3(rand_double()*max_rad-max_rad*0.5,rand_double()*max_rad-max_rad*0.5,rand_double()*max_rad-max_rad*0.5);
 
-	btVector3 speed = btVector3(rand_double()*max_speed-max_speed*0.5,rand_double()*max_speed-max_speed*0.5,rand_double()*max_speed-max_speed*0.5);
+    btVector3 angular = btVector3(rand_double()*max_rad-max_rad*0.5,rand_double()*max_rad-max_rad*0.5,rand_double()*max_rad-max_rad*0.5);
+    btVector3 speed = btVector3(rand_double()*max_speed-max_speed*0.5,rand_double()*max_speed-max_speed*0.5,rand_double()*max_speed-max_speed*0.5);
+
+
+    double rad = rand_double() * max_rad;
+    double velocity = rand_double() * max_speed;
 
     this->dice->setAngularVelocity(angular);
-    this->dice->setLinearVelocity(speed);
-
-    //cout << "angular velocity: " << angular.getX() << "," << angular.getY() << "," << angular.getZ() << endl;
-    //cout << "velocity: " << speed.getX() << "," << speed.getY() << "," << speed.getZ() << endl;
+   	this->dice->setLinearVelocity(speed);
+    cout << "angular velocity: " << angular.getX() << "," << angular.getY() << "," << angular.getZ() << endl;
+   	cout << "velocity: " << speed.getX() << "," << speed.getY() << "," << speed.getZ() << endl;
+    //cout << "=======================================" << endl;
 	m_guiHelper->autogenerateGraphicsObjects(m_dynamicsWorld);	
 }
-
 
 
 void BasicExample::renderScene()
@@ -605,47 +624,83 @@ void BasicExample::printVertices(){
 	int i;
 	for(i = 0; i < this->vertices.size(); i++){
 		btVector3 vertex = vertices[i];
-		cout << vertex.x() << "," << vertex.y() << "," << vertex.z() << endl;
+		//cout << vertex.x() << "," << vertex.y() << "," << vertex.z() << endl;
 	}
 }
 
 
-bool BasicExample::checkDice(){
-	const btVector3&  v = this->dice->getLinearVelocity();
-	return v.x() == 0 && v.y() == 0 && v.z() == 0;
+bool BasicExample::DiceIsStill(){
+	const btTransform& transfrom = this->dice->getCenterOfMassTransform();
+	btVector3 currPosition = transfrom*this->getCenterOfMass();
+	if(currPosition.getY() < -10) return true;
+	//cout << currPosition.getX() << "," <<  currPosition.getY ()<< "," << currPosition.getZ() << endl;
+	const btVector3& v = this->dice->getLinearVelocity();
+
+	return abs(v.x()) < eps && abs(v.y()) < eps && abs(v.z()) < eps;
 }
 
 set<int> BasicExample::checkFace(){
 	set<int> res;
 	const btTransform& transfrom = this->dice->getCenterOfMassTransform();
+
 	//cout << "endPosition: " << endl;
 	int i;
-	float lowest = 1000000000;
+	
+	vector<double> heights;
 	for(i = 0; i < 8; i++){
 		btVector3 endPosition = transfrom*this->vertices[i];
-		if(lowest > endPosition.getY()) lowest = endPosition.getY();
+		heights.push_back(endPosition.getY());
 	}
 
+	/*
 	for(i = 0; i < 8; i++){
 		btVector3 endPosition = transfrom*this->vertices[i];
-
-		//cout << endPosition[0] << "," << endPosition[1] << "," << endPosition[2] << endl;
  		if(btFabs(endPosition.getY()-lowest) < 0.1) res.insert(i);
 	}
+	*/
 
-	if(res.size() != 4){
+	
+	//find the lowest 4 vertices
+	for(i = 0; i < 4; i++){
+		double curr_min = 10000000000; 
+		int min_vertex = -1;
+		int j;
+		for(j = 0; j < 8; j++){
+			if(res.find(j) != res.end()) continue;
+			if(heights[j] < curr_min){
+				curr_min = heights[j];
+				min_vertex = j;
+			}
+		}
+		res.insert(min_vertex);
+	}
+
+	bool not_valid = false;
+	for(int r:res){
+		if(heights[r] > 10) not_valid = true;
+	}
+
+	if(res.size() == 4 && !not_valid){
+		/*
+		cout << "landed on 4 vertices" << endl;
 		for(i = 0; i < 8; i++){
 			btVector3 endPosition = transfrom*this->vertices[i];
-			//cout << endPosition[0] << "," << endPosition[1] << "," << endPosition[2] << endl;
+			cout << endPosition[0] << "," << endPosition[1] << "," << endPosition[2] << endl;
 		}
+		*/
+		
+	
 	}
 	else{
-		for(int s:res){
-			//cout << s << ",";
+		cout << "landed not on 4 vertices" << endl;
+		for(i = 0; i < 8; i++){
+			btVector3 endPosition = transfrom*this->vertices[i];
+			cout << endPosition[0] << "," << endPosition[1] << "," << endPosition[2] << endl;
 		}
-		cout << endl;
 	}
 
+	//cout << "=======================" << endl;
+	//cout << endl;
 	return res;
 }
 

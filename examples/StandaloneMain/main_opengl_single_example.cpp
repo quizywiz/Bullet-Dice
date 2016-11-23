@@ -68,6 +68,9 @@ public:
 	{
 	}
 };
+
+
+
 int main(int argc, char* argv[])
 {
 	
@@ -90,9 +93,11 @@ int main(int argc, char* argv[])
 	//initialize default vertices
 
 	float l,h,w;
-	cout << "please enter l h w" << endl;
-	cin>>l>>h>>w;
-
+	//cout << "please enter l h w" << endl;
+	//cin>>l>>h>>w;
+	l = 10;
+	h = 10;
+	w = 10;
 	float length = l;
 	float height = h;
 	float width = w;
@@ -145,9 +150,48 @@ int main(int argc, char* argv[])
 	example->resetCamera();
 
 
+	vector<set<int> > faces;
+	set<int> f1;
+	f1.insert(0);
+	f1.insert(4);
+	f1.insert(7);
+	f1.insert(3);
+	faces.push_back(f1);
+	set<int> f2;
+	f2.insert(0);
+	f2.insert(1);
+	f2.insert(5);
+	f2.insert(4);
+	faces.push_back(f2);
+	set<int> f3;
+	f3.insert(0);
+	f3.insert(3);
+	f3.insert(2);
+	f3.insert(1);
+	faces.push_back(f3);
+	set<int> f4;
+	f4.insert(3);
+	f4.insert(7);
+	f4.insert(6);
+	f4.insert(2);
+	faces.push_back(f4);
+	set<int> f5;
+	f5.insert(6);
+	f5.insert(7);
+	f5.insert(4);
+	f5.insert(5);
+	faces.push_back(f5);
+	set<int> f6;
+	f6.insert(6);
+	f6.insert(5);
+	f6.insert(1);
+	f6.insert(2);
+	faces.push_back(f6);
+
 
 	b3Clock clock;
 	btScalar seconds_pass = 0;
+	bool still = false;
 	//std::cout << "passed init Physics" << std::endl;
 	do
 	{
@@ -158,6 +202,7 @@ int main(int argc, char* argv[])
 		example->stepSimulation(dtSec);
 	  	clock.reset();
 	  	seconds_pass += dtSec;
+	  	cout << "dtSec: " << dtSec << endl;
 
 		example->renderScene();
  	
@@ -166,11 +211,32 @@ int main(int argc, char* argv[])
 		app->drawGrid(dg);
 		
 		app->swapBuffer();
+		//example->resetCamera();
+		if(seconds_pass > 10 && example->DiceIsStill()){
+			set<int> face1 = example->checkFace();
+			int i;
+			for(i = 0;i < faces.size(); i++){
+				set<int> face2 = faces[i];	
+				bool not_equal = false;
+				for(int f1:face1){			
+					if(face2.find(f1) == face2.end()) not_equal = true;
+				}
+				if(!still && !not_equal && face1.size() == 4){
+					cout << "landed on face: " << (i+1) << endl;
+					cout << "face1 in loop" << endl;
+					for(int f:face1){
+						cout << f << ",";
+					}
+					cout << endl;
+					still = true;
+				}
+			}
+		}
+		
+		
+	} while (seconds_pass < 1000 && !still);
 
-		example->checkDice();
-	} while (seconds_pass <= 1000);
 
-	example->checkFace();
 	example->exitPhysics();
 	
 	delete example;
