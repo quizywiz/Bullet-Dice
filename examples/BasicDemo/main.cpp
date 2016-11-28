@@ -80,7 +80,7 @@ bool faceMatch(set<int> face1,set<int> face2){
 
 
 
-int getDiscrepancy(vector<double> probs) {
+double getDiscrepancy(vector<double> probs) {
     int n = probs.size();
     vector<double> vals;
     for (int i = 0; i < (1 << n); ++i) {
@@ -98,16 +98,14 @@ int getDiscrepancy(vector<double> probs) {
         if (vals[i + 1] - vals[i] > d) {
             d = vals[i + 1] - vals[i];
         }
-        cout << vals[i + 1] - vals[i] << endl;
     }
-    return d;
+    return d/2;
 }
 
 double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 {
-	double res = 0;
 	int side = 6;
-	int roll_count = 1000;
+	int roll_count = 10000;
 	int i;
 	vector<double> probs;
 	for(i = 0; i < faces.size(); i++) probs.push_back(0);
@@ -123,19 +121,19 @@ double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 			if(faceMatch(faces[j],face_landed)) {
 				probs[j]++;
 				matched = true;
-				cout << "matched with face: " << (j+1) << endl;
+				//cout << "matched with face: " << (j+1) << endl;
+				//cout << "=========================" << endl;
 			}
 		}
 		if(!matched) {
 			++bad_count;
-			cout << "NOT MATCHED" <<endl;
-			for(int f:face_landed) cout << (f+1) << ",";
+			//cout << "NOT MATCHED" <<endl;
+			//for(int f:face_landed) cout << (f+1) << ",";
 			cout << endl;
-			//cout << face_landed.size() << endl;
 		}
 	}
 	
-	cout << "bad_count: " << bad_count << endl;
+	//cout << "bad_count: " << bad_count << endl;
 	roll_count -= bad_count;
 	for(i = 0; i < faces.size(); i++){
 		probs[i] = probs[i]/roll_count;
@@ -156,7 +154,6 @@ double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 	}
 	cout << endl;
 	*/
-
 	return getDiscrepancy(probs);
 }
 
@@ -180,9 +177,9 @@ int main(int argc, char* argv[])
 	for(i = 0; i < simulation_count; i++){
 		cout << "please enter l h w" << endl;
 		cin>>l>>h>>w;
-		//l = 10;
-		//h = 10;
-		//w = 10;
+		//l = 0.1;
+		//h = 0.1;
+		//w = 0.1;
 		float length = l;
 		float height = h;//1.5;
 		float width = w;//1.75;

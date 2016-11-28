@@ -93,11 +93,11 @@ int main(int argc, char* argv[])
 	//initialize default vertices
 
 	float l,h,w;
-	//cout << "please enter l h w" << endl;
-	//cin>>l>>h>>w;
-	l = 10;
-	h = 10;
-	w = 10;
+	cout << "please enter l h w" << endl;
+	cin>>l>>h>>w;
+	//l = 2;
+	//h = 2;
+	//w = 2;
 	float length = l;
 	float height = h;
 	float width = w;
@@ -202,7 +202,6 @@ int main(int argc, char* argv[])
 		example->stepSimulation(dtSec);
 	  	clock.reset();
 	  	seconds_pass += dtSec;
-	  	cout << "dtSec: " << dtSec << endl;
 
 		example->renderScene();
  	
@@ -211,8 +210,8 @@ int main(int argc, char* argv[])
 		app->drawGrid(dg);
 		
 		app->swapBuffer();
-		//example->resetCamera();
-		if(seconds_pass > 10 && example->DiceIsStill()){
+
+		if(seconds_pass > 1){
 			set<int> face1 = example->checkFace();
 			int i;
 			for(i = 0;i < faces.size(); i++){
@@ -232,9 +231,7 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
-		
-		
-	} while (seconds_pass < 1000 && !still);
+	} while (true || seconds_pass < 1000 && !still);
 
 
 	example->exitPhysics();
