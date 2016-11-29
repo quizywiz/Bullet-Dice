@@ -170,6 +170,14 @@ int main(int argc, char* argv[])
 	float h = 1.22249;
 	float w = 1.44929;
 
+	float height = 0.1;
+	int n = 6;
+	pair<float, float> pt[5]={{0.1,0},
+				{0.1,M_PI*2.0f/(n-1)},
+				{0.1, 2 * M_PI * 2.0f/(n-1)},
+				{0.1, 3 * M_PI * 2.0f/(n-1)},
+				{0.1, 4 * M_PI * 2.0f/(n-1)}};
+
 	float best_w,best_h;
 	int side_max_counts[6];
 	for(i = 0; i <6; i++) side_max_counts[i] = 0;
@@ -183,11 +191,21 @@ int main(int argc, char* argv[])
 		float length = l;
 		float height = h;//1.5;
 		float width = w;//1.75;
-		btVector3 v0;
-		v0.setX(0.0f);
-		v0.setY(0.0f);
-		v0.setZ(0.0f);
-		btVector3 v1;
+		btVector3 v[6];
+		v[0].setX(0.0f);
+		v[0].setY(height);
+		v[0].setZ(0.0f);
+
+		for (int i = 1 ; i < 6; ++ i) {
+			float x,y;
+			x = pt[i].first * cos(pt[i].second);
+			y = pt[i].first * sin(pt[i].second);
+			v[i].setX(x);
+			v[i].setY(0);
+			v[i].setZ(y);
+		}
+		/*
+		btVector3 v[];
 		v1.setX(0.0f);
 		v1.setY(0.0f);
 		v1.setZ(width);
@@ -215,6 +233,7 @@ int main(int argc, char* argv[])
 		v7.setX(length);
 		v7.setY(height);
 		v7.setZ(0.0f);
+		*/
 
 		vector<btVector3> v;
 		v.push_back(v0);
@@ -230,38 +249,34 @@ int main(int argc, char* argv[])
 		set<int> f1;
 		f1.insert(0);
 		f1.insert(4);
-		f1.insert(7);
-		f1.insert(3);
+		f1.insert(5);
 		faces.push_back(f1);
 		set<int> f2;
 		f2.insert(0);
-		f2.insert(1);
 		f2.insert(5);
-		f2.insert(4);
+		f2.insert(1);
 		faces.push_back(f2);
 		set<int> f3;
 		f3.insert(0);
-		f3.insert(3);
-		f3.insert(2);
 		f3.insert(1);
+		f3.insert(2);
 		faces.push_back(f3);
 		set<int> f4;
 		f4.insert(3);
-		f4.insert(7);
-		f4.insert(6);
+		f4.insert(0);
 		f4.insert(2);
 		faces.push_back(f4);
 		set<int> f5;
-		f5.insert(6);
-		f5.insert(7);
 		f5.insert(4);
-		f5.insert(5);
+		f5.insert(0);
+		f5.insert(3);
 		faces.push_back(f5);
 		set<int> f6;
-		f6.insert(6);
 		f6.insert(5);
-		f6.insert(1);
+		f6.insert(4);
+		f6.insert(3);
 		f6.insert(2);
+		f6.insert(1);
 		faces.push_back(f6);
 
 		

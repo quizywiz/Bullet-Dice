@@ -417,7 +417,7 @@ class Mirtich {
 	  iner.setY(J[Y][Y]);
 	  iner.setZ(J[Z][Z]);
 
-	  cout << r[X] << "," << r[Y] << "," << r[Z] << endl;
+	  //cout << r[X] << "," << r[Y] << "," << r[Z] << endl;
 	  //cout << J[X][X] << "," << J[Y][Y] << "," << J[Z][Z] << endl;
 	}
 };
@@ -459,7 +459,6 @@ void BasicExample::initPhysics()
 	}
 
 
-
 	random_device rand_dev;
 	mt19937 generator(rand_dev());
 	uniform_real_distribution<double> distr1(-1,1);
@@ -493,16 +492,10 @@ void BasicExample::initPhysics()
 		
 		int max_height = 0;
 		double height = 1 + rand_double()*max_height;
-		//height = 2;
-		//cout << "height : " << height << endl;
-		//height = 2;
 		startTransform.setOrigin(btVector3(	btScalar(0),
 										btScalar(height),
 										btScalar(0)));
 		
-		//btQuaternion quat;
-		//quat.setEuler(rand_double()*2*M_PI,rand_double()*2*M_PI,rand_double()*2*M_PI);
-       	
        	btTransform localTransform;
         localTransform.setIdentity();
         localTransform.setOrigin((-1)*getCenterOfMass());
@@ -513,18 +506,10 @@ void BasicExample::initPhysics()
 
 		
 	    double w = distr1(generator)*M_PI;
-	    
 	   	double x = distr2(generator);
 	   	double y = distr2(generator);
 	    double z = distr2(generator);
-	    
-	    /*
-	    double x = distr1(generator);
-	    double y = distr1(generator);
-	    double z = distr1(generator);
-	    */
 	   	btQuaternion quat(btVector3(x,y,z),w);
-	   	//quat.setEuler(0,w,0);
 	   	startTransform.setRotation(quat);
 	    this->dice = createRigidBody(mass, startTransform, compoundShape);
     }
@@ -557,33 +542,29 @@ btVector3 BasicExample::getCenterOfMass(){
 	vector<int> f1;
 	f1.push_back(0);
 	f1.push_back(4);
-	f1.push_back(7);
-	f1.push_back(3);
+	f1.push_back(5);
 	vector<int> f2;
 	f2.push_back(0);
-	f2.push_back(1);
 	f2.push_back(5);
-	f2.push_back(4);
+	f2.push_back(1);
 	vector<int> f3;
 	f3.push_back(0);
-	f3.push_back(3);
-	f3.push_back(2);
 	f3.push_back(1);
+	f3.push_back(2);
 	vector<int> f4;
 	f4.push_back(3);
-	f4.push_back(7);
-	f4.push_back(6);
+	f4.push_back(0);
 	f4.push_back(2);
 	vector<int> f5;
-	f5.push_back(6);
-	f5.push_back(7);
 	f5.push_back(4);
-	f5.push_back(5);
+	f5.push_back(0);
+	f5.push_back(3);
 	vector<int> f6;
-	f6.push_back(6);
 	f6.push_back(5);
-	f6.push_back(1);
+	f6.push_back(4);
+	f6.push_back(3);
 	f6.push_back(2);
+	f6.push_back(1);
 
 
 	faces.push_back(f1);
@@ -614,19 +595,27 @@ void BasicExample::printVertices(){
 
 
 bool BasicExample::DiceIsStill(){
+	const btTransform& transfrom = this->dice->getWorldTransform();
+	int i;
+	for(i = 0; i < 8; i++){
+		btVector3 endPosition = transfrom*this->vertices[i];
+		if(endPosition.getY() < -10) return true;
+	}
 	const btVector3&  v = this->dice->getLinearVelocity();
-	//if(v.y() < -10) return true;
+
 	return abs(v.x()) < this->eps && abs(v.y()) < this->eps && abs(v.z()) < this->eps;
 }
 
 set<int> BasicExample::checkFace(){
 	set<int> res;
+
 	const btTransform& transfrom = this->dice->getWorldTransform();
 
 	vector<double> heights;
 	int i;
 	for(i = 0; i < 8; i++){
 		btVector3 endPosition = transfrom*this->vertices[i];
+		if(endPosition.getY() < -10) return res;
 		heights.push_back(endPosition.getY());
 		//cout << endPosition.getX() << "," << endPosition.getY() << "," << endPosition.getZ() << endl;
 	}
@@ -644,12 +633,6 @@ set<int> BasicExample::checkFace(){
 			}
 		}
 		res.insert(min_vertex);
-	}
-
-	bool not_valid = false;
-	for(int r:res){
-		if(heights[r] > 10) not_valid = true;
-		//cout << heights[r] << ",";
 	}
 
 	/*
