@@ -53,7 +53,7 @@ struct BasicExample : public CommonRigidBodyBase
 	void printVertices();
 	bool DiceIsStill();
 	set<int> checkFace();
-	btVector3 getCenterOfMass();
+	pair<btVector3, btVector3>  getCenterOfMass();
 	double eps = 1e-7;
 
 	void resetCamera()
@@ -370,9 +370,9 @@ class Mirtich {
 	  printf("Tzx =  %+20.6f\n\n", TP[Z]);
 	  */
 
-	  density = 1.0;  /* assume unit density */
+	  mass = 1.0;  /* assume unit density */
 
-	  mass = density * T0;
+	  density = mass / T0;
 
 	  /* compute center of mass */
 	  r[X] = T1[X] / T0;
@@ -488,11 +488,10 @@ void BasicExample::initPhysics()
 
 
 		//cout << "localInertia: ";
-		btVector3 localInertia(0,0,0);
+		btVector3 localInertia(0,0,0), com(0,0,0);
 
 		
-		int max_height = 0;
-		double height = 1 + rand_double()*max_height;
+		double height = 1;
 		//height = 2;
 		//cout << "height : " << height << endl;
 		//height = 2;
@@ -505,13 +504,14 @@ void BasicExample::initPhysics()
        	
        	btTransform localTransform;
         localTransform.setIdentity();
-        localTransform.setOrigin((-1)*getCenterOfMass());
+        pair<btVector3, btVector3> inercom = getCenterOfMass();
+        localTransform.setOrigin((-1)*inercom.second);
         compoundShape->addChildShape(localTransform, colShape);
 
         if (isDynamic)
 			colShape->calculateLocalInertia(mass,localInertia);
-
-		
+		localInertia = inercom.first;
+		//cout << localInertia.getX()<<" "<<localInertia.getY()<<" "<<localInertia.getZ()<<endl;
 	    double w = distr1(generator)*M_PI;
 	    
 	   	double x = distr2(generator);
@@ -523,10 +523,16 @@ void BasicExample::initPhysics()
 	    double y = distr1(generator);
 	    double z = distr1(generator);
 	    */
-	   	btQuaternion quat(btVector3(x,y,z),w);
+	   
+
+
+	 	btQuaternion quat(btVector3(x,y,z),w);
 	   	//quat.setEuler(0,w,0);
 	   	startTransform.setRotation(quat);
-	    this->dice = createRigidBody(mass, startTransform, compoundShape);
+	   	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+	   	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,compoundShape,localInertia);
+	    this->dice = new btRigidBody(rbInfo);
+	    m_dynamicsWorld->addRigidBody(this->dice);
     }
         
     int max_speed = 10;
@@ -552,7 +558,7 @@ void BasicExample::renderScene()
 }
 
 
-btVector3 BasicExample::getCenterOfMass(){
+pair<btVector3, btVector3> BasicExample::getCenterOfMass(){
 	vector<vector<int> > faces;
 	vector<int> f1;
 	f1.push_back(0);
@@ -596,7 +602,10 @@ btVector3 BasicExample::getCenterOfMass(){
 	Mirtich m(faces,this->vertices);
 	btVector3 com, iner;
 	m.calculate_com_and_inertia(iner, com);
-	return com;
+	pair<btVector3, btVector3> return_v;
+	return_v.first = iner;
+	return_v.second = com;
+	return return_v;
 }
 
 //pass in vertex locations to create the dice

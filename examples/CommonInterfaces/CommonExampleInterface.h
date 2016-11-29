@@ -52,7 +52,7 @@ public:
 	virtual set<int> checkFace(){};
 	vector<btVector3> vertices;
 	btRigidBody* dice;
-	virtual btVector3 getCenterOfMass(){};
+	virtual pair<btVector3, btVector3>  getCenterOfMass(){};
 
 
 	virtual void    initPhysics()=0;

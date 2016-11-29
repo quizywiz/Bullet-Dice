@@ -105,7 +105,7 @@ double getDiscrepancy(vector<double> probs) {
 double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 {
 	int side = 6;
-	int roll_count = 10000;
+	int roll_count = 1000;
 	int i;
 	vector<double> probs;
 	for(i = 0; i < faces.size(); i++) probs.push_back(0);
