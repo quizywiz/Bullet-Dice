@@ -53,7 +53,7 @@ struct BasicExample : public CommonRigidBodyBase
 	void printVertices();
 	bool DiceIsStill();
 	set<int> checkFace();
-	btVector3 getCenterOfMass();
+	pair<btVector3, btVector3>  getCenterOfMass();
 	double eps = 1e-7;
 
 	void resetCamera()
@@ -370,9 +370,9 @@ class Mirtich {
 	  printf("Tzx =  %+20.6f\n\n", TP[Z]);
 	  */
 
-	  density = 1.0;  /* assume unit density */
+	  mass = 1.0;  /* assume unit density */
 
-	  mass = density * T0;
+	  density = mass / T0;
 
 	  /* compute center of mass */
 	  r[X] = T1[X] / T0;
@@ -459,6 +459,7 @@ void BasicExample::initPhysics()
 	}
 
 
+
 	random_device rand_dev;
 	mt19937 generator(rand_dev());
 	uniform_real_distribution<double> distr1(-1,1);
@@ -487,31 +488,51 @@ void BasicExample::initPhysics()
 
 
 		//cout << "localInertia: ";
-		btVector3 localInertia(0,0,0);
+		btVector3 localInertia(0,0,0), com(0,0,0);
 
 		
-		int max_height = 0;
-		double height = 1 + rand_double()*max_height;
+		double height = 1;
+		//height = 2;
+		//cout << "height : " << height << endl;
+		//height = 2;
 		startTransform.setOrigin(btVector3(	btScalar(0),
 										btScalar(height),
 										btScalar(0)));
 		
+		//btQuaternion quat;
+		//quat.setEuler(rand_double()*2*M_PI,rand_double()*2*M_PI,rand_double()*2*M_PI);
+       	
        	btTransform localTransform;
         localTransform.setIdentity();
-        localTransform.setOrigin((-1)*getCenterOfMass());
+        pair<btVector3, btVector3> inercom = getCenterOfMass();
+        localTransform.setOrigin((-1)*inercom.second);
         compoundShape->addChildShape(localTransform, colShape);
 
         if (isDynamic)
 			colShape->calculateLocalInertia(mass,localInertia);
-
-		
+		localInertia = inercom.first;
+		//cout << localInertia.getX()<<" "<<localInertia.getY()<<" "<<localInertia.getZ()<<endl;
 	    double w = distr1(generator)*M_PI;
+	    
 	   	double x = distr2(generator);
 	   	double y = distr2(generator);
 	    double z = distr2(generator);
-	   	btQuaternion quat(btVector3(x,y,z),w);
+	    
+	    /*
+	    double x = distr1(generator);
+	    double y = distr1(generator);
+	    double z = distr1(generator);
+	    */
+	   
+
+
+	 	btQuaternion quat(btVector3(x,y,z),w);
+	   	//quat.setEuler(0,w,0);
 	   	startTransform.setRotation(quat);
-	    this->dice = createRigidBody(mass, startTransform, compoundShape);
+	   	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+	   	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,compoundShape,localInertia);
+	    this->dice = new btRigidBody(rbInfo);
+	    m_dynamicsWorld->addRigidBody(this->dice);
     }
         
     int max_speed = 10;
@@ -537,7 +558,7 @@ void BasicExample::renderScene()
 }
 
 
-btVector3 BasicExample::getCenterOfMass(){
+pair<btVector3, btVector3> BasicExample::getCenterOfMass(){
 	vector<vector<int> > faces;
 	vector<int> f1;
 	f1.push_back(0);
@@ -577,7 +598,10 @@ btVector3 BasicExample::getCenterOfMass(){
 	Mirtich m(faces,this->vertices);
 	btVector3 com, iner;
 	m.calculate_com_and_inertia(iner, com);
-	return com;
+	pair<btVector3, btVector3> return_v;
+	return_v.first = iner;
+	return_v.second = com;
+	return return_v;
 }
 
 //pass in vertex locations to create the dice
@@ -595,27 +619,19 @@ void BasicExample::printVertices(){
 
 
 bool BasicExample::DiceIsStill(){
-	const btTransform& transfrom = this->dice->getWorldTransform();
-	int i;
-	for(i = 0; i < 8; i++){
-		btVector3 endPosition = transfrom*this->vertices[i];
-		if(endPosition.getY() < -10) return true;
-	}
 	const btVector3&  v = this->dice->getLinearVelocity();
-
+	//if(v.y() < -10) return true;
 	return abs(v.x()) < this->eps && abs(v.y()) < this->eps && abs(v.z()) < this->eps;
 }
 
 set<int> BasicExample::checkFace(){
 	set<int> res;
-
 	const btTransform& transfrom = this->dice->getWorldTransform();
 
 	vector<double> heights;
 	int i;
 	for(i = 0; i < 8; i++){
 		btVector3 endPosition = transfrom*this->vertices[i];
-		if(endPosition.getY() < -10) return res;
 		heights.push_back(endPosition.getY());
 		//cout << endPosition.getX() << "," << endPosition.getY() << "," << endPosition.getZ() << endl;
 	}
@@ -633,6 +649,12 @@ set<int> BasicExample::checkFace(){
 			}
 		}
 		res.insert(min_vertex);
+	}
+
+	bool not_valid = false;
+	for(int r:res){
+		if(heights[r] > 10) not_valid = true;
+		//cout << heights[r] << ",";
 	}
 
 	/*
