@@ -236,14 +236,9 @@ int main(int argc, char* argv[])
 		*/
 
 		vector<btVector3> v;
-		v.push_back(v0);
-		v.push_back(v1);
-		v.push_back(v2);
-		v.push_back(v3);
-		v.push_back(v4);
-		v.push_back(v5);
-		v.push_back(v6);
-		v.push_back(v7);
+		for( int i = 0 ; i < 6 ; ++ i) {
+			v.push_back(v[i]);
+		}
 
 		vector<set<int> > faces;
 		set<int> f1;
