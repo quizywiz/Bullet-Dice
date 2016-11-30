@@ -183,14 +183,14 @@ int main(int argc, char* argv[])
 	for(i = 0; i <6; i++) side_max_counts[i] = 0;
 
 	for(i = 0; i < simulation_count; i++){
-		cout << "please enter l h w" << endl;
-		cin>>l>>h>>w;
-		//l = 0.1;
-		//h = 0.1;
-		//w = 0.1;
-		float length = l;
-		float height = h;//1.5;
-		float width = w;//1.75;
+		cout << "please enter h" << endl;
+		
+		float height = 0.1;
+		cin >> height;
+		cout << "enter (r,\\theta) in {meter, radian} for five points" << endl;
+		for(int i = 1 ; i < 6; ++ i) {
+			cin >> pt[i].first >> pt[i].second;
+		}
 		btVector3 v[6];
 		v[0].setX(0.0f);
 		v[0].setY(height);
@@ -236,14 +236,9 @@ int main(int argc, char* argv[])
 		*/
 
 		vector<btVector3> v;
-		v.push_back(v0);
-		v.push_back(v1);
-		v.push_back(v2);
-		v.push_back(v3);
-		v.push_back(v4);
-		v.push_back(v5);
-		v.push_back(v6);
-		v.push_back(v7);
+		for( int i = 0 ; i < 6 ; ++ i) {
+			v.push_back(v[i]);
+		}
 
 		vector<set<int> > faces;
 		set<int> f1;
