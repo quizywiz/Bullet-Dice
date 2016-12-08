@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 	example = StandaloneExampleCreateFunc(options);
 	//std::cout << "before vertexPoints" << std::endl;
 	//initialize default vertices
-
+	/*
 	float l,h,w;
 	cout << "please enter l h w" << endl;
 	cin>>l>>h>>w;
@@ -133,8 +133,32 @@ int main(int argc, char* argv[])
 	v7.setX(length);
 	v7.setY(height);
 	v7.setZ(0.0f);
+	*/
 
+	cout << "please enter h" << endl;
+	
+	pair<float, float> pt[5];
+	float height = 0.1;
+	cin >> height;
+	cout << "enter (r,\\theta) in {meter, degree} for five points" << endl;
+	for(int i = 1 ; i < 6; ++ i) {
+		cin >> pt[i].first >> pt[i].second;
+		pt[i].second *= (M_PI/180);
+	}
+	btVector3 v[6];
+	v[0].setX(0.0f);
+	v[0].setY(height);
+	v[0].setZ(0.0f);
 
+	for (int i = 1 ; i < 6; ++ i) {
+		float x,y;
+		x = pt[i].first * cos(pt[i].second);
+		y = pt[i].first * sin(pt[i].second);
+		v[i].setX(x);
+		v[i].setY(0);
+		v[i].setZ(y);
+	}
+	/*
 	vector<btVector3> v;
 	v.push_back(v0);
 	v.push_back(v1);
@@ -144,7 +168,12 @@ int main(int argc, char* argv[])
 	v.push_back(v5);
 	v.push_back(v6);
 	v.push_back(v7);
-	example->vertexPoints(v);
+	*/
+	vector<btVector3> vv;
+	for( int i = 0 ; i < 6 ; ++ i) {
+		vv.push_back(v[i]);
+	}
+	example->vertexPoints(vv);
 	//std::cout << "passed vertexPoints" << std::endl;
 	example->initPhysics();
 	example->resetCamera();
@@ -154,38 +183,34 @@ int main(int argc, char* argv[])
 	set<int> f1;
 	f1.insert(0);
 	f1.insert(4);
-	f1.insert(7);
-	f1.insert(3);
+	f1.insert(5);
 	faces.push_back(f1);
 	set<int> f2;
 	f2.insert(0);
-	f2.insert(1);
 	f2.insert(5);
-	f2.insert(4);
+	f2.insert(1);
 	faces.push_back(f2);
 	set<int> f3;
 	f3.insert(0);
-	f3.insert(3);
-	f3.insert(2);
 	f3.insert(1);
+	f3.insert(2);
 	faces.push_back(f3);
 	set<int> f4;
 	f4.insert(3);
-	f4.insert(7);
-	f4.insert(6);
+	f4.insert(0);
 	f4.insert(2);
 	faces.push_back(f4);
 	set<int> f5;
-	f5.insert(6);
-	f5.insert(7);
 	f5.insert(4);
-	f5.insert(5);
+	f5.insert(0);
+	f5.insert(3);
 	faces.push_back(f5);
 	set<int> f6;
-	f6.insert(6);
 	f6.insert(5);
-	f6.insert(1);
+	f6.insert(4);
+	f6.insert(3);
 	f6.insert(2);
+	f6.insert(1);
 	faces.push_back(f6);
 
 

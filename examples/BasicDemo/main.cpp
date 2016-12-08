@@ -71,7 +71,7 @@ set<int> roll(vector<btVector3> vertices){
 
 //return true if two sets of vertex indices represent the same face
 bool faceMatch(set<int> face1,set<int> face2){
-	if(face1.size() != 4 || face2.size() != 4) return false;
+	//if(face1.size() != 4 || face2.size() != 4) return false;
 	for(int f1:face1){
 		if(face2.find(f1) == face2.end()) return false;
 	}
@@ -126,7 +126,8 @@ double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 			}
 		}
 		if(!matched) {
-			++bad_count;
+			probs[faces.size()-1]++;
+			//++bad_count;
 			//cout << "NOT MATCHED" <<endl;
 			//for(int f:face_landed) cout << (f+1) << ",";
 			cout << endl;
@@ -134,7 +135,7 @@ double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 	}
 	
 	//cout << "bad_count: " << bad_count << endl;
-	roll_count -= bad_count;
+	//roll_count -= bad_count;
 	for(i = 0; i < faces.size(); i++){
 		probs[i] = probs[i]/roll_count;
 		cout << "calculated probs for each side: " << probs[i] << endl;
@@ -171,12 +172,14 @@ int main(int argc, char* argv[])
 	float w = 1.44929;
 
 	float height = 0.1;
-	int n = 6;
-	pair<float, float> pt[5]={{0.1,0},
+	int n = 5;
+	pair<float, float> pt[6];
+	/*{{0.1,0},
 				{0.1,M_PI*2.0f/(n-1)},
 				{0.1, 2 * M_PI * 2.0f/(n-1)},
 				{0.1, 3 * M_PI * 2.0f/(n-1)},
 				{0.1, 4 * M_PI * 2.0f/(n-1)}};
+	*/
 
 	float best_w,best_h;
 	int side_max_counts[6];
@@ -187,16 +190,20 @@ int main(int argc, char* argv[])
 		
 		float height = 0.1;
 		cin >> height;
-		cout << "enter (r,\\theta) in {meter, radian} for five points" << endl;
-		for(int i = 1 ; i < 6; ++ i) {
+		cout << height << endl;
+		cout << "enter (r,\\theta) in {meter, degree} for five points" << endl;
+		for(int i = 1 ; i < n; ++ i) {
 			cin >> pt[i].first >> pt[i].second;
+			pt[i].second *= (M_PI/180);
+			cout << pt[i].first <<" "<< pt[i].second << endl;
 		}
+
 		btVector3 v[6];
 		v[0].setX(0.0f);
 		v[0].setY(height);
 		v[0].setZ(0.0f);
 
-		for (int i = 1 ; i < 6; ++ i) {
+		for (int i = 1 ; i < n; ++ i) {
 			float x,y;
 			x = pt[i].first * cos(pt[i].second);
 			y = pt[i].first * sin(pt[i].second);
@@ -205,6 +212,9 @@ int main(int argc, char* argv[])
 			v[i].setZ(y);
 		}
 		/*
+		double width = 1;
+		double height = 1;
+		double length = 1;
 		btVector3 v[];
 		v1.setX(0.0f);
 		v1.setY(0.0f);
@@ -233,13 +243,48 @@ int main(int argc, char* argv[])
 		v7.setX(length);
 		v7.setY(height);
 		v7.setZ(0.0f);
+		
+
+
+		vector<int> f1;
+		f1.push_back(0);
+		f1.push_back(4);
+		f1.push_back(7);
+		f1.push_back(3);
+		vector<int> f2;
+		f2.push_back(0);
+		f2.push_back(1);
+		f2.push_back(5);
+		f2.push_back(4);
+		vector<int> f3;
+		f3.push_back(0);
+		f3.push_back(3);
+		f3.push_back(2);
+		f3.push_back(1);
+		vector<int> f4;
+		f4.push_back(3);
+		f4.push_back(7);
+		f4.push_back(6);
+		f4.push_back(2);
+		vector<int> f5;
+		f5.push_back(6);
+		f5.push_back(7);
+		f5.push_back(4);
+		f5.push_back(5);
+		vector<int> f6;
+		f6.push_back(6);
+		f6.push_back(5);
+		f6.push_back(1);
+		f6.push_back(2);
 		*/
 
-		vector<btVector3> v;
-		for( int i = 0 ; i < 6 ; ++ i) {
-			v.push_back(v[i]);
-		}
 
+		
+		vector<btVector3> vv;
+		for( int i = 0 ; i < n ; ++ i) {
+			vv.push_back(v[i]);
+		}
+		
 		vector<set<int> > faces;
 		set<int> f1;
 		f1.insert(0);
@@ -266,6 +311,7 @@ int main(int argc, char* argv[])
 		f5.insert(0);
 		f5.insert(3);
 		faces.push_back(f5);
+
 		set<int> f6;
 		f6.insert(5);
 		f6.insert(4);
@@ -273,9 +319,38 @@ int main(int argc, char* argv[])
 		f6.insert(2);
 		f6.insert(1);
 		faces.push_back(f6);
-
 		
-		double d = calcDiscrepancy(v,faces);
+		/*
+		vector<set<int> > faces;
+		set<int> f1;
+		f1.insert(0);
+		f1.insert(4);
+		f1.insert(1);
+		faces.push_back(f1);
+		set<int> f3;
+		f3.insert(0);
+		f3.insert(1);
+		f3.insert(2);
+		faces.push_back(f3);
+		set<int> f4;
+		f4.insert(3);
+		f4.insert(0);
+		f4.insert(2);
+		faces.push_back(f4);
+		set<int> f5;
+		f5.insert(4);
+		f5.insert(0);
+		f5.insert(3);
+		faces.push_back(f5);
+
+		set<int> f6;
+		f6.insert(4);
+		f6.insert(3);
+		f6.insert(2);
+		f6.insert(1);
+		faces.push_back(f6);
+		*/
+		double d = calcDiscrepancy(vv,faces);
 		/*
 		if(d < min_discrepancy){
 			min_discrepancy = d;

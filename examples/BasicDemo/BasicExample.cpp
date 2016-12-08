@@ -55,6 +55,7 @@ struct BasicExample : public CommonRigidBodyBase
 	set<int> checkFace();
 	pair<btVector3, btVector3>  getCenterOfMass();
 	double eps = 1e-7;
+	void fallIsInFace(btVector3 com,vector<vector<int> > faces);
 
 	void resetCamera()
 	{
@@ -472,7 +473,7 @@ void BasicExample::initPhysics()
         m_collisionShapes.push_back((btCollisionShape *)colShape);
         
         int i;
-        for(i = 0; i < 8; i++){
+        for(i = 0; i < this->vertices.size(); i++){
         	btVector3 vertex = this->vertices[i];
         	colShape->addPoint(vertex,true);
         }
@@ -559,6 +560,7 @@ void BasicExample::renderScene()
 
 
 pair<btVector3, btVector3> BasicExample::getCenterOfMass(){
+	
 	vector<vector<int> > faces;
 	vector<int> f1;
 	f1.push_back(0);
@@ -594,13 +596,52 @@ pair<btVector3, btVector3> BasicExample::getCenterOfMass(){
 	faces.push_back(f4);
 	faces.push_back(f5);
 	faces.push_back(f6);
-	
+		
+
+	/*
+	vector<vector<int> > faces;
+	vector<int> f1;
+	f1.push_back(0);
+	f1.push_back(4);
+	f1.push_back(1);
+	vector<int> f3;
+	f3.push_back(0);
+	f3.push_back(1);
+	f3.push_back(2);
+	vector<int> f4;
+	f4.push_back(3);
+	f4.push_back(0);
+	f4.push_back(2);
+	vector<int> f5;
+	f5.push_back(4);
+	f5.push_back(0);
+	f5.push_back(3);
+	vector<int> f6;
+	f6.push_back(5);
+	f6.push_back(4);
+	f6.push_back(3);
+	f6.push_back(2);
+	f6.push_back(1);
+	*/
+
+	/*
+	faces.push_back(f1);
+	faces.push_back(f2);
+	faces.push_back(f3);
+	faces.push_back(f4);
+	faces.push_back(f5);
+	faces.push_back(f6);
+	*/
 	Mirtich m(faces,this->vertices);
 	btVector3 com, iner;
 	m.calculate_com_and_inertia(iner, com);
 	pair<btVector3, btVector3> return_v;
 	return_v.first = iner;
 	return_v.second = com;
+
+	fallIsInFace(com,faces);
+	//cout << return_v.first.getX() << "," << return_v.first.getY() << "," << return_v.first.getZ() << endl;
+
 	return return_v;
 }
 
@@ -630,18 +671,18 @@ set<int> BasicExample::checkFace(){
 
 	vector<double> heights;
 	int i;
-	for(i = 0; i < 8; i++){
+	for(i = 0; i < this->vertices.size(); i++){
 		btVector3 endPosition = transfrom*this->vertices[i];
 		heights.push_back(endPosition.getY());
 		//cout << endPosition.getX() << "," << endPosition.getY() << "," << endPosition.getZ() << endl;
 	}
 	
-	//find the lowest 4 vertices
-	for(i = 0; i < 4; i++){
+	//find the lowest 3 vertices
+	for(i = 0; i < 3; i++){
 		double curr_min = 10000000000; 
 		int min_vertex = -1;
 		int j;
-		for(j = 0; j < 8; j++){
+		for(j = 0; j < this->vertices.size(); j++){
 			if(res.find(j) != res.end()) continue;
 			if(heights[j] < curr_min){
 				curr_min = heights[j];
@@ -651,11 +692,7 @@ set<int> BasicExample::checkFace(){
 		res.insert(min_vertex);
 	}
 
-	bool not_valid = false;
-	for(int r:res){
-		if(heights[r] > 10) not_valid = true;
-		//cout << heights[r] << ",";
-	}
+
 
 	/*
 	for(i = 0; i < 8; i++){
@@ -668,6 +705,31 @@ set<int> BasicExample::checkFace(){
 
 	return res;
 }
+
+
+//print out the projection of com on each face
+void BasicExample::fallIsInFace(btVector3 com,vector<vector<int> > faces){
+ 	int i;
+ 	for(i = 0; i < faces.size() - 1; i++){
+ 		vector<int> curr_face = faces[i];
+ 		btVector3 v1 = this->vertices[curr_face[0]];
+ 		btVector3 v2 = this->vertices[curr_face[1]];
+ 		btVector3 v3 = this->vertices[curr_face[2]];
+ 		btVector3 edge1 = v1 - v2;
+ 		btVector3 edge2 = v3 - v2;
+ 		btVector3 normal = edge1.cross(edge2);
+ 		normal = normal/sqrt(normal.getX()*normal.getX() + normal.getY()*normal.getY() + normal.getZ() * normal.getZ());
+ 		btVector3 diff = com - v2;
+ 		double dist = normal.dot(diff);
+ 		btVector3 projected_point = com - dist * normal;
+ 		cout << "projected_point for face :" << (i + 1) << " is: ";
+ 		cout << projected_point.getX() << "," << projected_point.getY() << "," << projected_point.getZ() << endl;
+ 	} 
+ 	printVertices();
+}
+
+
+
 
 
 CommonExampleInterface*    BasicExampleCreateFunc(CommonExampleOptions& options)
