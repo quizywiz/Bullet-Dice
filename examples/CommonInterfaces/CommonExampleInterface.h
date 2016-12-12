@@ -45,14 +45,14 @@ public:
 	virtual void printVertices(){};
 
 	//return false if Dice is not still
-	virtual bool checkDice(){};
-
+	virtual bool DiceIsStill(){};
 
 	//check the current face it's landing on
 	virtual set<int> checkFace(){};
 	vector<btVector3> vertices;
 	btRigidBody* dice;
-	virtual btVector3 getCenterOfMass(){};
+	virtual pair<btVector3, btVector3> getCenterOfMass(){};
+	//check if the center of mass fails within the particular face
 
 	virtual void    initPhysics()=0;
 	virtual void    exitPhysics()=0;

@@ -29,12 +29,13 @@ subject to the following restrictions:
 
 #include <vector>
 #include <set>
-//#include <stdio.h>
 #include <iostream>
 #include <cstring>
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
+#include <random>
+#include <unistd.h>
 
 using namespace std;
 
@@ -50,13 +51,15 @@ struct BasicExample : public CommonRigidBodyBase
 
 	void vertexPoints(vector<btVector3> vertices);
 	void printVertices();
-	bool checkDice();
+	bool DiceIsStill();
 	set<int> checkFace();
-	btVector3 getCenterOfMass();
+	pair<btVector3, btVector3>  getCenterOfMass();
+	double eps = 1e-7;
+	void fallIsInFace(btVector3 com,vector<vector<int> > faces);
 
 	void resetCamera()
 	{
-		float dist = 6;
+		float dist = 2;
 		float pitch = 52;
 		float yaw = 35;
 		float targetPos[3]={0,0,0};
@@ -368,9 +371,9 @@ class Mirtich {
 	  printf("Tzx =  %+20.6f\n\n", TP[Z]);
 	  */
 
-	  density = 1.0;  /* assume unit density */
+	  mass = 1.0;  /* assume unit density */
 
-	  mass = density * T0;
+	  density = mass / T0;
 
 	  /* compute center of mass */
 	  r[X] = T1[X] / T0;
@@ -414,6 +417,8 @@ class Mirtich {
 	  iner.setX(J[X][X]);
 	  iner.setY(J[Y][Y]);
 	  iner.setZ(J[Z][Z]);
+
+	  //cout << r[X] << "," << r[Y] << "," << r[Z] << endl;
 	  //cout << J[X][X] << "," << J[Y][Y] << "," << J[Z][Z] << endl;
 	}
 };
@@ -432,7 +437,6 @@ void BasicExample::initPhysics()
 	m_guiHelper->setUpAxis(1);
 
 	createEmptyDynamicsWorld();
-	//m_dynamicsWorld->setGravity(btVector3(0,0,0));
 	m_guiHelper->createPhysicsDebugDrawer(m_dynamicsWorld);
 
 	if (m_dynamicsWorld->getDebugDrawer())
@@ -456,24 +460,23 @@ void BasicExample::initPhysics()
 	}
 
 
+
+	random_device rand_dev;
+	mt19937 generator(rand_dev());
+	uniform_real_distribution<double> distr1(-1,1);
+	normal_distribution<double> distr2(0,1);
+
     //create arbitrary shape convex polyhrdron shaped dice
     {	
     	btCompoundShape* compoundShape = new btCompoundShape();
         btConvexHullShape* colShape = new btConvexHullShape();
         m_collisionShapes.push_back((btCollisionShape *)colShape);
         
-        //cout << "vertex coordinates" << endl;
         int i;
-        for(i = 0; i < 8; i++){
+        for(i = 0; i < this->vertices.size(); i++){
         	btVector3 vertex = this->vertices[i];
         	colShape->addPoint(vertex,true);
-        	//cout << vertex.getX() << " ";
-        	//cout << vertex.getY() << " ";
-        	//cout << vertex.getZ() << " ";
-        	//cout << endl;
         }
-        //cout << this->vertices.size() << endl;
-
 
 		/// Create Dynamic Objects
 		btTransform startTransform;
@@ -486,12 +489,10 @@ void BasicExample::initPhysics()
 
 
 		//cout << "localInertia: ";
-		btVector3 localInertia(0,0,0);
+		btVector3 localInertia(0,0,0), com(0,0,0);
 
 		
-
-		int max_height = 50;
-		double height = 50 + rand_double()*max_height;
+		double height = 1;
 		//height = 2;
 		//cout << "height : " << height << endl;
 		//height = 2;
@@ -502,40 +503,49 @@ void BasicExample::initPhysics()
 		//btQuaternion quat;
 		//quat.setEuler(rand_double()*2*M_PI,rand_double()*2*M_PI,rand_double()*2*M_PI);
        	
-       	double x = rand_double() - 0.5;
-       	double y = rand_double() - 0.5;
-       	double z = rand_double() - 0.5;
-       	double w = rand_double() * M_PI * 2;
-
-       	btQuaternion quat(btVector3(x,y,z),btScalar(w));
-       	startTransform.setRotation(quat);
-
        	btTransform localTransform;
         localTransform.setIdentity();
-        localTransform.setOrigin((-1)*getCenterOfMass());
+        pair<btVector3, btVector3> inercom = getCenterOfMass();
+        localTransform.setOrigin((-1)*inercom.second);
         compoundShape->addChildShape(localTransform, colShape);
-
 
         if (isDynamic)
 			colShape->calculateLocalInertia(mass,localInertia);
+		localInertia = inercom.first;
+		//cout << localInertia.getX()<<" "<<localInertia.getY()<<" "<<localInertia.getZ()<<endl;
+	    double w = distr1(generator)*M_PI;
+	    
+	   	double x = distr2(generator);
+	   	double y = distr2(generator);
+	    double z = distr2(generator);
+	    
+	    /*
+	    double x = distr1(generator);
+	    double y = distr1(generator);
+	    double z = distr1(generator);
+	    */
+	   
 
-		//cout << localInertia.getX() << ",";
-		//cout << localInertia.getY() << ",";
-		//cout << localInertia.getZ() << endl;
-		this->dice = createRigidBody(mass,startTransform,compoundShape);	
+
+	 	btQuaternion quat(btVector3(x,y,z),w);
+	   	//quat.setEuler(0,w,0);
+	   	startTransform.setRotation(quat);
+	   	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+	   	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass,myMotionState,compoundShape,localInertia);
+	    this->dice = new btRigidBody(rbInfo);
+	    m_dynamicsWorld->addRigidBody(this->dice);
     }
-    
-
-    
+        
     int max_speed = 10;
     double max_rad = M_PI*10;
-    btVector3 angular = btVector3(rand_double()*max_rad-max_rad*0.5,rand_double()*max_rad-max_rad*0.5,rand_double()*max_rad-max_rad*0.5);
+    btVector3 angular = btVector3(distr1(generator),distr1(generator),distr1(generator));
+    angular *= max_rad;
+	btVector3 speed = btVector3(distr1(generator),distr1(generator),distr1(generator));
+	speed *= max_speed;
 
-	btVector3 speed = btVector3(rand_double()*max_speed-max_speed*0.5,rand_double()*max_speed-max_speed*0.5,rand_double()*max_speed-max_speed*0.5);
-
-    this->dice->setAngularVelocity(angular);
-    this->dice->setLinearVelocity(speed);
-
+   	this->dice->setAngularVelocity(angular);
+   	this->dice->setLinearVelocity(speed);
+	
     //cout << "angular velocity: " << angular.getX() << "," << angular.getY() << "," << angular.getZ() << endl;
     //cout << "velocity: " << speed.getX() << "," << speed.getY() << "," << speed.getZ() << endl;
 	m_guiHelper->autogenerateGraphicsObjects(m_dynamicsWorld);	
@@ -549,38 +559,35 @@ void BasicExample::renderScene()
 }
 
 
-btVector3 BasicExample::getCenterOfMass(){
+pair<btVector3, btVector3> BasicExample::getCenterOfMass(){
+	
 	vector<vector<int> > faces;
 	vector<int> f1;
 	f1.push_back(0);
 	f1.push_back(4);
-	f1.push_back(7);
-	f1.push_back(3);
+	f1.push_back(5);
 	vector<int> f2;
 	f2.push_back(0);
-	f2.push_back(1);
 	f2.push_back(5);
-	f2.push_back(4);
+	f2.push_back(1);
 	vector<int> f3;
 	f3.push_back(0);
-	f3.push_back(3);
-	f3.push_back(2);
 	f3.push_back(1);
+	f3.push_back(2);
 	vector<int> f4;
 	f4.push_back(3);
-	f4.push_back(7);
-	f4.push_back(6);
+	f4.push_back(0);
 	f4.push_back(2);
 	vector<int> f5;
-	f5.push_back(6);
-	f5.push_back(7);
 	f5.push_back(4);
-	f5.push_back(5);
+	f5.push_back(0);
+	f5.push_back(3);
 	vector<int> f6;
-	f6.push_back(6);
 	f6.push_back(5);
-	f6.push_back(1);
+	f6.push_back(4);
+	f6.push_back(3);
 	f6.push_back(2);
+	f6.push_back(1);
 
 
 	faces.push_back(f1);
@@ -589,11 +596,53 @@ btVector3 BasicExample::getCenterOfMass(){
 	faces.push_back(f4);
 	faces.push_back(f5);
 	faces.push_back(f6);
-	
+		
+
+	/*
+	vector<vector<int> > faces;
+	vector<int> f1;
+	f1.push_back(0);
+	f1.push_back(4);
+	f1.push_back(1);
+	vector<int> f3;
+	f3.push_back(0);
+	f3.push_back(1);
+	f3.push_back(2);
+	vector<int> f4;
+	f4.push_back(3);
+	f4.push_back(0);
+	f4.push_back(2);
+	vector<int> f5;
+	f5.push_back(4);
+	f5.push_back(0);
+	f5.push_back(3);
+	vector<int> f6;
+	f6.push_back(5);
+	f6.push_back(4);
+	f6.push_back(3);
+	f6.push_back(2);
+	f6.push_back(1);
+	*/
+
+	/*
+	faces.push_back(f1);
+	faces.push_back(f2);
+	faces.push_back(f3);
+	faces.push_back(f4);
+	faces.push_back(f5);
+	faces.push_back(f6);
+	*/
 	Mirtich m(faces,this->vertices);
 	btVector3 com, iner;
 	m.calculate_com_and_inertia(iner, com);
-	return com;
+	pair<btVector3, btVector3> return_v;
+	return_v.first = iner;
+	return_v.second = com;
+
+	fallIsInFace(com,faces);
+	//cout << return_v.first.getX() << "," << return_v.first.getY() << "," << return_v.first.getZ() << endl;
+
+	return return_v;
 }
 
 //pass in vertex locations to create the dice
@@ -610,44 +659,77 @@ void BasicExample::printVertices(){
 }
 
 
-bool BasicExample::checkDice(){
+bool BasicExample::DiceIsStill(){
 	const btVector3&  v = this->dice->getLinearVelocity();
-	return v.x() == 0 && v.y() == 0 && v.z() == 0;
+	//if(v.y() < -10) return true;
+	return abs(v.x()) < this->eps && abs(v.y()) < this->eps && abs(v.z()) < this->eps;
 }
 
 set<int> BasicExample::checkFace(){
 	set<int> res;
-	const btTransform& transfrom = this->dice->getCenterOfMassTransform();
-	//cout << "endPosition: " << endl;
+	const btTransform& transfrom = this->dice->getWorldTransform();
+
+	vector<double> heights;
 	int i;
-	float lowest = 1000000000;
+	for(i = 0; i < this->vertices.size(); i++){
+		btVector3 endPosition = transfrom*this->vertices[i];
+		heights.push_back(endPosition.getY());
+		//cout << endPosition.getX() << "," << endPosition.getY() << "," << endPosition.getZ() << endl;
+	}
+	
+	//find the lowest 3 vertices
+	for(i = 0; i < 3; i++){
+		double curr_min = 10000000000; 
+		int min_vertex = -1;
+		int j;
+		for(j = 0; j < this->vertices.size(); j++){
+			if(res.find(j) != res.end()) continue;
+			if(heights[j] < curr_min){
+				curr_min = heights[j];
+				min_vertex = j;
+			}
+		}
+		res.insert(min_vertex);
+	}
+
+
+
+	/*
 	for(i = 0; i < 8; i++){
 		btVector3 endPosition = transfrom*this->vertices[i];
-		if(lowest > endPosition.getY()) lowest = endPosition.getY();
+		cout << "old pos: " << this->vertices[i].getY() << ", ";
+		cout << "current pos: " << endPosition.getY() << ", " << endl;
 	}
-
-	for(i = 0; i < 8; i++){
-		btVector3 endPosition = transfrom*this->vertices[i];
-
-		//cout << endPosition[0] << "," << endPosition[1] << "," << endPosition[2] << endl;
- 		if(btFabs(endPosition.getY()-lowest) < 0.1) res.insert(i);
-	}
-
-	if(res.size() != 4){
-		for(i = 0; i < 8; i++){
-			btVector3 endPosition = transfrom*this->vertices[i];
-			//cout << endPosition[0] << "," << endPosition[1] << "," << endPosition[2] << endl;
-		}
-	}
-	else{
-		for(int s:res){
-			//cout << s << ",";
-		}
-		cout << endl;
-	}
+	cout << "checkFace" << endl;
+	*/
 
 	return res;
 }
+
+
+//print out the projection of com on each face
+void BasicExample::fallIsInFace(btVector3 com,vector<vector<int> > faces){
+ 	int i;
+ 	for(i = 0; i < faces.size() - 1; i++){
+ 		vector<int> curr_face = faces[i];
+ 		btVector3 v1 = this->vertices[curr_face[0]];
+ 		btVector3 v2 = this->vertices[curr_face[1]];
+ 		btVector3 v3 = this->vertices[curr_face[2]];
+ 		btVector3 edge1 = v1 - v2;
+ 		btVector3 edge2 = v3 - v2;
+ 		btVector3 normal = edge1.cross(edge2);
+ 		normal = normal/sqrt(normal.getX()*normal.getX() + normal.getY()*normal.getY() + normal.getZ() * normal.getZ());
+ 		btVector3 diff = com - v2;
+ 		double dist = normal.dot(diff);
+ 		btVector3 projected_point = com - dist * normal;
+ 		cout << "projected_point for face :" << (i + 1) << " is: ";
+ 		cout << projected_point.getX() << "," << projected_point.getY() << "," << projected_point.getZ() << endl;
+ 	} 
+ 	printVertices();
+}
+
+
+
 
 
 CommonExampleInterface*    BasicExampleCreateFunc(CommonExampleOptions& options)
@@ -658,7 +740,6 @@ CommonExampleInterface*    BasicExampleCreateFunc(CommonExampleOptions& options)
 
 
 B3_STANDALONE_EXAMPLE(BasicExampleCreateFunc)
-
 
 
 

@@ -18,6 +18,8 @@ subject to the following restrictions:
 
 #include "../CommonInterfaces/CommonExampleInterface.h"
 #include "../CommonInterfaces/CommonGUIHelperInterface.h"
+//#include "../Utils/b3Clock.h"
+
 #include "BulletCollision/CollisionDispatch/btCollisionObject.h"
 #include "BulletCollision/CollisionShapes/btCollisionShape.h"
 //#include "BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h"
@@ -36,10 +38,18 @@ subject to the following restrictions:
 #include <thread>
 #include <set>
 #include <cstdlib>
-#include <ctime>m
+#include <ctime>
+#include <cmath>
 
 using namespace std;
 
+
+
+double rand_double1() {
+	double x = (double) rand() / RAND_MAX;
+	//cout << "rand_double1 " << x << endl;
+	return x;
+}
 
 set<int> roll(vector<btVector3> vertices){
 	DummyGUIHelper noGfx;
@@ -48,15 +58,10 @@ set<int> roll(vector<btVector3> vertices){
 	
 	example->vertexPoints(vertices);
 	example->initPhysics();
-	int iteration = 0;
-	while(!example->checkDice()){
+	do{
 		example->stepSimulation(1.f/60.f);
-		iteration++;
-		//this_thread::sleep_for(chrono::milliseconds(1000));
-	}
+	}while(!example->DiceIsStill());
 
-	//cout << "iterations passed: " << iteration << endl;
-	//cout << "here" << endl;
 	set<int> face = example->checkFace();
 	example->exitPhysics();
 	delete example;
@@ -65,14 +70,10 @@ set<int> roll(vector<btVector3> vertices){
 
 
 //return true if two sets of vertex indices represent the same face
-bool faceMatch(set<int> faces1,set<int> faces2){
-	set<int> copy = faces2;
-	for(int f1:faces1){
-		bool found = false;
-		for(int f2:faces2){
-			found = found || f1 == f2;
-		}
-		if(!found) return false;
+bool faceMatch(set<int> face1,set<int> face2){
+	//if(face1.size() != 4 || face2.size() != 4) return false;
+	for(int f1:face1){
+		if(face2.find(f1) == face2.end()) return false;
 	}
 	return true;
 }
@@ -94,17 +95,15 @@ double getDiscrepancy(vector<double> probs) {
     double d = 0;
     sort(vals.begin(), vals.end());
     for (int i = 0; i < vals.size() - 1; ++i) {
-    	//cout << vals[i] << endl;
         if (vals[i + 1] - vals[i] > d) {
             d = vals[i + 1] - vals[i];
         }
     }
-    return d;
+    return d/2;
 }
 
 double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 {
-	double res = 0;
 	int side = 6;
 	int roll_count = 10000;
 	int i;
@@ -122,28 +121,44 @@ double calcDiscrepancy(vector<btVector3> vertices,vector<set<int> > faces)
 			if(faceMatch(faces[j],face_landed)) {
 				probs[j]++;
 				matched = true;
+				//cout << "matched with face: " << (j+1) << endl;
+				//cout << "=========================" << endl;
 			}
 		}
 		if(!matched) {
-			++bad_count;
+			probs[faces.size()-1]++;
+			//++bad_count;
 			//cout << "NOT MATCHED" <<endl;
-			//cout << face_landed.size() << endl;
+			//for(int f:face_landed) cout << (f+1) << ",";
+			cout << endl;
 		}
 	}
-	roll_count -= bad_count;
+	
+	//cout << "bad_count: " << bad_count << endl;
+	//roll_count -= bad_count;
 	for(i = 0; i < faces.size(); i++){
 		probs[i] = probs[i]/roll_count;
 		cout << "calculated probs for each side: " << probs[i] << endl;
 	}
-	cout << endl;
 
+	/*
+	vector<double> probs_copy;
+	for(i = 0; i < 6; i++) probs_copy.push_back(probs[i]);
+	sort(probs_copy.begin(),probs_copy.end(),greater<double>());
+
+
+	for(i = 0; i < 6; i++){
+		int j;
+		for(j = 0; j < 6; j++){
+			if(abs(probs[j]-probs_copy[i]) < 1e-4) cout << (j+1) << ",";
+		}
+	}
+	cout << endl;
+	*/
 	return getDiscrepancy(probs);
 }
 
-double rand_double1() {
-	double x = (double) rand() / RAND_MAX;
-	return x;
-}
+
 
 int main(int argc, char* argv[])
 {
@@ -156,22 +171,51 @@ int main(int argc, char* argv[])
 	float h = 1.22249;
 	float w = 1.44929;
 
-	float best_w,best_h;
-	for(i = 0; i < simulation_count; i++){
-		//float l = 1;
-		//float b = rand_double1() + 1;
-		//float h = rand_double1() + 1;
+	float height = 0.1;
+	int n = 5;
+	pair<float, float> pt[6];
+	/*{{0.1,0},
+				{0.1,M_PI*2.0f/(n-1)},
+				{0.1, 2 * M_PI * 2.0f/(n-1)},
+				{0.1, 3 * M_PI * 2.0f/(n-1)},
+				{0.1, 4 * M_PI * 2.0f/(n-1)}};
+	*/
 
-		cout << "please enter l h w" << endl;
-		cin>>l>>h>>w;
-		float length = l;
-		float height = h;//1.5;
-		float width = w;//1.75;
-		btVector3 v0;
-		v0.setX(0.0f);
-		v0.setY(0.0f);
-		v0.setZ(0.0f);
-		btVector3 v1;
+	float best_w,best_h;
+	int side_max_counts[6];
+	for(i = 0; i <6; i++) side_max_counts[i] = 0;
+
+	for(i = 0; i < simulation_count; i++){
+		cout << "please enter h" << endl;
+		
+		float height = 0.1;
+		cin >> height;
+		cout << height << endl;
+		cout << "enter (r,\\theta) in {meter, degree} for five points" << endl;
+		for(int i = 1 ; i < n; ++ i) {
+			cin >> pt[i].first >> pt[i].second;
+			pt[i].second *= (M_PI/180);
+			cout << pt[i].first <<" "<< pt[i].second << endl;
+		}
+
+		btVector3 v[6];
+		v[0].setX(0.0f);
+		v[0].setY(height);
+		v[0].setZ(0.0f);
+
+		for (int i = 1 ; i < n; ++ i) {
+			float x,y;
+			x = pt[i].first * cos(pt[i].second);
+			y = pt[i].first * sin(pt[i].second);
+			v[i].setX(x);
+			v[i].setY(0);
+			v[i].setZ(y);
+		}
+		/*
+		double width = 1;
+		double height = 1;
+		double length = 1;
+		btVector3 v[];
 		v1.setX(0.0f);
 		v1.setY(0.0f);
 		v1.setZ(width);
@@ -199,66 +243,127 @@ int main(int argc, char* argv[])
 		v7.setX(length);
 		v7.setY(height);
 		v7.setZ(0.0f);
+		
 
-		vector<btVector3> v;
-		v.push_back(v0);
-		v.push_back(v1);
-		v.push_back(v2);
-		v.push_back(v3);
-		v.push_back(v4);
-		v.push_back(v5);
-		v.push_back(v6);
-		v.push_back(v7);
 
+		vector<int> f1;
+		f1.push_back(0);
+		f1.push_back(4);
+		f1.push_back(7);
+		f1.push_back(3);
+		vector<int> f2;
+		f2.push_back(0);
+		f2.push_back(1);
+		f2.push_back(5);
+		f2.push_back(4);
+		vector<int> f3;
+		f3.push_back(0);
+		f3.push_back(3);
+		f3.push_back(2);
+		f3.push_back(1);
+		vector<int> f4;
+		f4.push_back(3);
+		f4.push_back(7);
+		f4.push_back(6);
+		f4.push_back(2);
+		vector<int> f5;
+		f5.push_back(6);
+		f5.push_back(7);
+		f5.push_back(4);
+		f5.push_back(5);
+		vector<int> f6;
+		f6.push_back(6);
+		f6.push_back(5);
+		f6.push_back(1);
+		f6.push_back(2);
+		*/
+
+
+		
+		vector<btVector3> vv;
+		for( int i = 0 ; i < n ; ++ i) {
+			vv.push_back(v[i]);
+		}
+		
 		vector<set<int> > faces;
 		set<int> f1;
 		f1.insert(0);
 		f1.insert(4);
-		f1.insert(7);
-		f1.insert(3);
+		f1.insert(5);
 		faces.push_back(f1);
 		set<int> f2;
 		f2.insert(0);
-		f2.insert(1);
 		f2.insert(5);
-		f2.insert(4);
+		f2.insert(1);
 		faces.push_back(f2);
 		set<int> f3;
 		f3.insert(0);
-		f3.insert(3);
-		f3.insert(2);
 		f3.insert(1);
+		f3.insert(2);
 		faces.push_back(f3);
 		set<int> f4;
 		f4.insert(3);
-		f4.insert(7);
-		f4.insert(6);
+		f4.insert(0);
 		f4.insert(2);
 		faces.push_back(f4);
 		set<int> f5;
-		f5.insert(6);
-		f5.insert(7);
 		f5.insert(4);
-		f5.insert(5);
+		f5.insert(0);
+		f5.insert(3);
 		faces.push_back(f5);
+
 		set<int> f6;
-		f6.insert(6);
 		f6.insert(5);
-		f6.insert(1);
+		f6.insert(4);
+		f6.insert(3);
 		f6.insert(2);
+		f6.insert(1);
 		faces.push_back(f6);
-
 		
-		double d = calcDiscrepancy(v,faces);
+		/*
+		vector<set<int> > faces;
+		set<int> f1;
+		f1.insert(0);
+		f1.insert(4);
+		f1.insert(1);
+		faces.push_back(f1);
+		set<int> f3;
+		f3.insert(0);
+		f3.insert(1);
+		f3.insert(2);
+		faces.push_back(f3);
+		set<int> f4;
+		f4.insert(3);
+		f4.insert(0);
+		f4.insert(2);
+		faces.push_back(f4);
+		set<int> f5;
+		f5.insert(4);
+		f5.insert(0);
+		f5.insert(3);
+		faces.push_back(f5);
 
+		set<int> f6;
+		f6.insert(4);
+		f6.insert(3);
+		f6.insert(2);
+		f6.insert(1);
+		faces.push_back(f6);
+		*/
+		double d = calcDiscrepancy(vv,faces);
+		/*
 		if(d < min_discrepancy){
 			min_discrepancy = d;
 			best_h = h;
 			best_w = w;
 		}
+		*/
 		
 		cout << "calculated discrepancy: " << d << endl;
+		
 	}
+
+
 	//cout << "best_h: " << best_h << endl;
 	//cout << "best_b: " << best_b << endl;
 	return 0;
