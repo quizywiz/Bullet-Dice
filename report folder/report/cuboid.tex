@@ -37,7 +37,7 @@ Now we describe the strategy to reach the optimal value:\\
     \item Suppose lb and lh are both greater than their target. This means bh is less than its target. Decrease the side l by as much as possible to bring them closer to the optimal value. This will bring all three faces closer to the optimal value.\\
     Similarly, if lb and lh are both less than their target, increase l.\\
     \item Note that this works irrespective of which two faces are greater or less than their target.\\
-
+    
 \end{itemize}
 
 Note that this algorithm will converge when one of the three faces reaches their target, not when all three reach. We can fix this by using two binary searches, one on the lb face's probability and one on lh face's probability (when both of these reach their target, bh will also reach the target). However, we did not implement the two binary searches because finding the probabilities of each face with a high enough accuracy to justify using this was anyway not possible, especially on a simulator.\\
@@ -53,10 +53,6 @@ calculated probs for side 5: 0.105 \\
 calculated probs for side 6: 0.041\\
 calculated discrepancy: 0.0205\\
 The calculated discrepancy for the simulation of this dice was 0.0205. This was close enough to the optimal value of $\frac{1}{52}$ = 0.0192 that we did not experiment with non integer values.\\
-\subsection{Pre-Tournament Rolling Analysis}
-After reducing the problem to one in which the surface areas of parallel surfaces were the same and calculating an optimal build with proportions of 9x11x12, we proceeded to 3d-print three dice with the previously mentioned dimensions for testing in sizes scaled 1x, 2x and 3x. We 3d-printed the same die in three different sizes because of uncertainties regarding how scale would affect our calculated probabilities in the real world.\\
-‘Small’ dice corresponds to 1x the proportions. ‘Medium’ dice corresponds to 2x the proportions. And lastly, ‘Large’ dice corresponds to 3x the proportions. Each die was rolled 100 times into a cardboard box. The top side of the die was recorded after each throw. For each die: 6 pips and 1 pip correspond to sides that are proportionally 11x12, 5 pips and 2 pips correspond to sides that are proportionally 12x9, 3 pips and 4 pips correspond to sides that are proportionally 9x11. Our real-world results for these three die were as follows.\\
-
 \subsection{Pre-Tournament Rolling Analysis}
 After reducing the problem to one in which the surface areas of parallel surfaces were the same and calculating an optimal build with proportions of 9x11x12, we proceeded to 3d-print three dice with the previously mentioned dimensions for testing in sizes scaled 1x, 2x and 3x. We 3d-printed the same die in three different sizes because of uncertainties regarding how scale would affect our calculated probabilities in the real world.\\
 ‘Small’ dice corresponds to 1x the proportions. ‘Medium’ dice corresponds to 2x the proportions. And lastly, ‘Large’ dice corresponds to 3x the proportions. Each die was rolled 100 times into a cardboard box. The top side of the die was recorded after each throw. For each die: 6 pips and 1 pip correspond to sides that are proportionally 11x12, 5 pips and 2 pips correspond to sides that are proportionally 12x9, 3 pips and 4 pips correspond to sides that are proportionally 9x11. Our real-world results for these three die were as follows.\\
@@ -117,3 +113,5 @@ The measured discrepancy turned out to be 4.2\%, which is about twice what was c
     \item Inaccuracies inherent in the simulator that arise from a lack of data about friction and the restitution of the rolling surface. There are also inaccuracies that arise from the simulator cutting corners to improve speed.\\
     \item Our usage of a 20\% fill for the 3D printed dice. As we discuss later, a 100\% fill for the five sided dice led to a very accurate result.
 \end{itemize}
+
+
