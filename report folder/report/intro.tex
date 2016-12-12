@@ -1,27 +1,14 @@
 \section{Introduction}
 \subsection{Premise}
-The Discrepant Dice Company is a start-up devoted to solving the following critical problem plaguing modern society: too many die rolls are needed to determine an outcome. For example, suppose that you wanted to specify a random event with an arbitrary probability, say 57.5\%. With a regular 6-sided die, you could get outcomes with 50\% probability (e.g., roll an even number) or 67\% probability (e.g., roll a number less than 5). But to get closer to the desired probability you'd need to either roll the die multiple times, or use a die with more faces. But even a regular 20-sided die will still not be able to get closer than 55\% or 60\% with one roll.
-
-Your job is to design a die that allows you to get as close as possible to any specified outcome probability.
+The Discrepant Dice Company is a start-up devoted to solving the following critical problem plaguing modern society: too many die rolls are needed to determine an outcome. For example, suppose that you wanted to specify a random event with an arbitrary probability, say 57.5\%. With a regular 6-sided die, you could get outcomes with 50\% probability (e.g., roll an even number) or 67\% probability (e.g., roll a number less than 5). But to get closer to the desired probability you'd need to either roll the die multiple times, or use a die with more faces. But even a regular 20-sided die will still not be able to get closer than 55\% or 60\% with one roll. Our job is to design a die that allows us to get as close as possible to any specified outcome probability.
 
 \subsection{General ideas and directions}
 There are two main approaches to this project. One is to make a physical die, make incremental changes about the die's shape/weight/surface base on empirical test data to try to get close to the optimal discrepancy.
 
-The other approach is to test some configurations in the physical simulator, use some algorithms to figure out which configuration of the die would give us a better discrepancy, then print out the physical die according to the simulator result.
-
-Aside from the fact that the simulator strategy aligns to a surface-area manipulation approach, is the fact that a weighting/detracting approach introduces a variety of complications. When weighting a typical die, questions arise such as what material to use for weight, how to guarantee the weight is uniform across the face (assuming you are weighting faces and not edges or vertices) and will not shift, and principally how does the weighting of any one face (or edge or vertex) affect the probabilities of the faces adjacent to it? The level of complication this introduces into any approach that would methodically advance towards an optimal solution, was further argument in favor of pursuing an alternate approach to weighting.
-
-We picked the simulator approach base on the following reasons:\\
-
-1. The experimental environment of real life tossing is not as controllable as the Simulator.
-
-From a physics standpoint, the outcome of the die depends on many factors which we cannot reasonably control over many experiments. The way one person roll the die and the condition of the surface can both influence the outcome and make us do the wrong refinement of the shape. In the simulator, we can generate the initial height,rotation, velocity and angular velocity by programs to ensure they are truly unbiased, and we can control the surface condition to be the same over different configurations.\\
-
-2. The real life tossing experiments can take up a large amount of time.
-
-For the six-sided die, the optimal discrepancy requires one side to have a probability of ${\frac{1}{63}}$. This means any reasonable estimate of the true probability of each face, we would roughly need at least 100 rolls. This can take up a lot of our time for little incremental benefits, whereas for our simulator we can do 10,000 rolls for the same configuration in 20-30 seconds, so we can quickly improve our design and try many different configurations.
-
+The other approach is to test some configurations in the physical simulator, use some algorithms to figure out which configuration of the die would give us a better discrepancy, then print out the physical die according to the simulator result. 
+We picked the simulator approach base on the following reasons:\\\\
+1. The experimental environment of real life tossing is not as controllable as the Simulator. From a physics standpoint, the outcome of the die depends on many factors which we cannot reasonably control over many experiments. The way one person roll the die and the condition of the surface can both influence the outcome and make us do the wrong refinement of the shape. In the simulator, we can generate the initial height, rotation, velocity and angular velocity by programs to ensure they are truly unbiased, and we can control the surface condition to be the same over different configurations.\\\\
+2. The real life tossing experiments can take up a large amount of time. For the six-sided die, the optimal discrepancy requires one side to have a probability of ${\frac{1}{63}}$. This means any reasonable estimate of the true probability of each face, we would roughly need at least 100 rolls. This can take up a lot of our time for little incremental benefits, whereas for our simulator we can do 10,000 rolls for the same configuration in 20-30 seconds, so we can quickly improve our design and try many different configurations and designs.\\
 \subsection{Proposed algorithms and structures}
-We planned to use Bullet, the open source physics game engine as our Simulator. We decided to change the discrepancies of a virtual die by altering only the shape of its rigid body, in order to simplify the problem.
-
-For each shape, we planned to roll it a large amount of times (say 10,000), calculate the resulting discrepancy, then treat the configuration and discrepancy as the input/output of a function. We can then use algorithms like hill climbing or simulated annealing to find a local minimum value of the discrepancy.
+We planned to use Bullet, the open source physics game engine as our Simulator. We decided to change the discrepancies of a virtual die by altering only the shape of its rigid body, in order to simplify the problem.\\\\
+For each shape, we planned to roll it a large amount of times in simulation (say 10,000), calculate the resulting discrepancy, then treat the configuration and discrepancy as the input/output of a function. We can then use algorithms like hill climbing or simulated annealing to find a local minimum value of the discrepancy.
