@@ -11,7 +11,7 @@ The final shape that we explored was the pyramidal dice. We have a base with eit
 \center
 \includegraphics[scale=1]{pyramid_height.png}
 \caption{Square Pyramid with five sides}
-\label{fig:square_p}
+\label{fig:square_py}
 \end{figure}
 
 There were two main reasons for choosing this particular shape:\\
@@ -43,17 +43,80 @@ height = 1\\
 (1.7, 288)\}\\
 The angles here are in degrees.\\
 Six sided pyramidal die simulation result:\\
-calculated probs for side 1: 0.023 (4\%)\\
-calculated probs for side 2: 0.0584 (4\%)\\
-calculated probs for side 3: 0.2553 (19\%)\\
-calculated probs for side 4: 0.0323 (3\%)\\
-calculated probs for side 5: 0.1267 (17\%)\\
-calculated probs for side 6: 0.5043  (53\%)\\
+calculated probs for side 1: 0.023 \\
+calculated probs for side 2: 0.0584 \\
+calculated probs for side 3: 0.2553 \\
+calculated probs for side 4: 0.0323 \\
+calculated probs for side 5: 0.1267 \\
+calculated probs for side 6: 0.5043  \\
 calculated discrepancy: 0.0115\\
 
 \subsubsection{Improving Accuracy with weights}
 The six sided dice had two faces with a very low probability of 4\% on the simulator. Unfortunately, the inconsistencies between the simulator and the physical realization meant that our 3D printed dice could not land on one of the faces. To counter this, we weighted the faulty face by placing a small amount of tape on it, thereby shifting the center of mass closer to this face, allowing the dice to land on it.\\
 
 \subsubsection{Rolling Analysis}
+\begin{figure}[h]
+\center
+\includegraphics[scale=1]{pyramid6_graph.png}
+\caption{Probability shares for each face as a function of rolls. The gap between lines is the probability of each face.}
+\label{fig:pyrg}
+\end{figure}
+\begin{figure}[h]
+\center
+\includegraphics[scale=1]{pyramid6_di.png}
+\caption{Measured discrepancy as a function of number of rolls.}
+\label{fig:pyrd}
+\end{figure}
+Total Rolls : 100\\
+Measured probability for side 1: (4\%)\\
+Measured probability for side 2: (4\%)\\
+Measured probability for side 3: (19\%)\\
+Measured probability for side 4: (3\%)\\
+Measured probability for side 5: (17\%)\\
+Measured probability for side 6: (53\%)\\
+Discrepancy: 3\%\\
+The measured discrepancy turned out to be 3\%, which is about twice what is between twice and thrice what was calculated by the simulator.\\
+It is interesting to note that the probabilities here are much closer to their predicted values than for the cuboid, owing to the 100\% fill we used on the 3D printer.\\
+We believe the difference is because of the initial difference which made one of the sides have a zero probability, and the tape which we used to fix this changed the probabilities of the faces in unpredictable ways.\\
+The method of using tape to fix this probability issue turned out to be less than ideal, because after the first 100 rolls, the wearing of the dice made the tape start to fall off, which meant that our discrepancy value would not converge correctly, so we stopped the experiment and continued with the cuboidal dice instead.\\
 
+\subsection{Five Sided Dice}
+\subsubsection{Simulator Results}
+The optimal parameters found by the simulator after the hill climbing algorithm are:\\
+height = 1\\
+($r_i$, $\theta_i$) = \\
+\{(1, 0)\\
+(1, 72)\\
+(1, 144)\\
+(1, 233)\}\\
+The angles here are in degrees.\\
+Five sided pyramidal die simulation result:\\
+calculated probs for each side: 0.1633 \\
+calculated probs for each side: 0.0521 \\
+calculated probs for each side: 0.1955 \\
+calculated probs for each side: 0.0951 \\
+calculated probs for each side: 0.494 \\
+calculated discrepancy: 0.02605
 
+\subsubsection{Rolling Analysis}
+\begin{figure}[h]
+\center
+\includegraphics[scale=1]{pyramid5_graph.png}
+\caption{Probability shares for each face as a function of rolls. The gap between lines is the probability of each face.}
+\label{fig:pyr5g}
+\end{figure}
+\begin{figure}[h]
+\center
+\includegraphics[scale=1]{pyramid5_d.png}
+\caption{Measured discrepancy as a function of number of rolls.}
+\label{fig:pyr5d}
+\end{figure}
+Total Rolls : 500\\
+Measured probability for side 1: 79(15.8\%)\\
+Measured probability for side 2: 20(4\%)\\
+Measured probability for side 3: 131(26.2\%)\\
+Measured probability for side 4: 46(9.2\%)\\
+Measured probability for side 5: 224(44.8\%)\\
+Discrepancy: 2.6\%\\
+The probabilities here are very similar to the simulated values. The measured discrepancy turned out to be almost exactly the predicted discrepancy, which proves that our approach of using a simulator was a good way to solve this problem.\\
+Our five sided die was a great success because it has the lowest discrepancy of all the five sided dice by far with the second lowest being 3.6\%. Interestingly, it also beats five of the nine six sided dice, which is quite remarkable.\\
