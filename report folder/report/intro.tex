@@ -4,6 +4,7 @@ The Discrepant Dice Company is a start-up devoted to solving the following criti
 
 \subsection{General ideas and directions}
 There are two main approaches to this project. One is to make a physical die, make incremental changes about the die's shape/weight/surface base on empirical test data to try to get close to the optimal discrepancy.
+
 The other approach is to test some configurations in the physical simulator, use some algorithms to figure out which configuration of the die would give us a better discrepancy, then print out the physical die according to the simulator result. 
 We picked the simulator approach base on the following reasons:\\\\
 1. The experimental environment of real life tossing is not as controllable as the Simulator. From a physics standpoint, the outcome of the die depends on many factors which we cannot reasonably control over many experiments. The way one person roll the die and the condition of the surface can both influence the outcome and make us do the wrong refinement of the shape. In the simulator, we can generate the initial height, rotation, velocity and angular velocity by programs to ensure they are truly unbiased, and we can control the surface condition to be the same over different configurations.\\\\
